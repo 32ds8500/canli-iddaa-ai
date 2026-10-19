@@ -104,6 +104,8 @@ def live_matches(
             "corner_confidence": bundle.corner.confidence,
             "goal": goal_keys,
             "corner": corner_keys,
+            "source": "live",
+            "as_of_minute": bundle.features.minute,
             "baseline": {
                 "goal_source": bundle.baseline.source,
                 "corner_source": bundle.baseline.source,
@@ -131,6 +133,8 @@ def _prediction_payload(db: Session, match: Match) -> dict:
             "corner_confidence": bundle.corner.confidence,
             "goal": goal_keys,
             "corner": corner_keys,
+            "source": "live",
+            "as_of_minute": bundle.features.minute,
             "baseline": {
                 "goal_source": bundle.baseline.source,
                 "corner_source": bundle.baseline.source,
@@ -138,6 +142,45 @@ def _prediction_payload(db: Session, match: Match) -> dict:
                 "note": bundle.baseline.note,
             },
         }
+    if match.status_short not in NOT_STARTED:
+        history = (
+            db.query(Prediction)
+            .filter(Prediction.match_id == match.id)
+            .order_by(Prediction.created_at.desc())
+            .all()
+        )
+        if history:
+            def latest_map(target: str) -> tuple[dict[str, float], int | None]:
+                target_rows = [r for r in history if r.target == target]
+                if not target_rows:
+                    return {}, None
+                minute = max((r.minute_at_prediction or 0) for r in target_rows)
+                rows = [r for r in target_rows if (r.minute_at_prediction or 0) == minute]
+                return {r.market: r.probability for r in rows}, minute
+
+            goal_map, goal_minute = latest_map("goal")
+            corner_map, corner_minute = latest_map("corner")
+            if goal_map or corner_map:
+                minute = max(goal_minute or 0, corner_minute or 0)
+                return {
+                    "goal_sufficient": bool(goal_map),
+                    "corner_sufficient": bool(corner_map),
+                    "goal_insufficient_reason": None if goal_map else "Kayitli tahmin yok.",
+                    "corner_insufficient_reason": None if corner_map else "Kayitli tahmin yok.",
+                    "goal_confidence": 0.0,
+                    "corner_confidence": 0.0,
+                    "goal": goal_map,
+                    "corner": corner_map,
+                    "source": "history",
+                    "as_of_minute": minute,
+                    "baseline": {
+                        "goal_source": "kayitli tahmin",
+                        "corner_source": "kayitli tahmin",
+                        "sample_matches": 0,
+                        "note": f"Mac bitti; {minute}. dakikada kaydedilen tahminler gosteriliyor.",
+                    },
+                }
+
     reason = "Mac baslamadi; tahmin mac baslayinca uretilir." if match.status_short in NOT_STARTED else "Mac bitti; tahmin uretilmez."
     return {
         "goal_sufficient": False,
@@ -148,6 +191,8 @@ def _prediction_payload(db: Session, match: Match) -> dict:
         "corner_confidence": 0.0,
         "goal": {},
         "corner": {},
+        "source": "none",
+        "as_of_minute": None,
         "baseline": {
             "goal_source": "—",
             "corner_source": "—",

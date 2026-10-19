@@ -67,6 +67,12 @@ export function MatchCard({ match, onOpen }: Props) {
 
       <div className="card__stale muted">Güncelleme yaşı: {ageLabel(match.data_age_seconds)}</div>
 
+      {pred.source === "history" && (
+        <div className="muted small pad-x">
+          Maç bitti · {pred.as_of_minute != null ? `${pred.as_of_minute}. dakikada` : "maç sırasında"} kaydedilen tahminler
+        </div>
+      )}
+
       <div className="headline">
         <div className={`hl ${pred.goal_sufficient ? "" : "hl--off"}`}>
           <div className="hl__label">10 dk içinde gol</div>

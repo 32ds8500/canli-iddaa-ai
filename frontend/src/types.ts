@@ -44,6 +44,8 @@ export interface LivePredictions {
     sample_matches: number;
     note: string | null;
   };
+  source?: "live" | "history" | "none";
+  as_of_minute?: number | null;
 }
 
 export interface LiveMatch {

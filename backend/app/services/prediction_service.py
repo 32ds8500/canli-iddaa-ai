@@ -94,8 +94,10 @@ def persist_predictions(
     """
     if match_status in FINISHED_STATUSES:
         return 0
-    created = 0
     feats = bundle.features
+    if not (0 <= feats.minute <= 95):
+        return 0
+    created = 0
     for result in (bundle.goal, bundle.corner):
         if not result.sufficient:
             continue

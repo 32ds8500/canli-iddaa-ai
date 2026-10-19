@@ -178,7 +178,8 @@ class FotMobProvider(FootballProvider):
         return out
 
     def get_fixtures_by_date(self, date: str) -> list[LiveFixture]:
-        data = self._get("api/data/matches", {"date": date}, ttl=60)
+        compact = date.replace("-", "")
+        data = self._get("api/data/matches", {"date": compact}, ttl=60)
         out: list[LiveFixture] = []
         for league in data.get("leagues", []):
             fid = str(league.get("id"))

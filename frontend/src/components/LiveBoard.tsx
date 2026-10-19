@@ -71,8 +71,7 @@ export function LiveBoard({ onOpen }: Props) {
         <div className="empty">
           <p>Şu anda izlenen canlı maç yok.</p>
           <p className="muted small">
-            Maçları görmek için önce "Canlıyı yenile" ile sağlayıcıdan veri çekin. API anahtarı tanımlı değilse canlı veri
-            alınamaz.
+            Şu anda hedef liglerde oynanan maç yok. Günün tüm maçlarını <b>Bugün</b> sekmesinden görebilirsin.
           </p>
         </div>
       )}

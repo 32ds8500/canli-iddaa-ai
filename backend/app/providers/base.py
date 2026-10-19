@@ -124,6 +124,10 @@ class FootballProvider(ABC):
     def get_live_fixtures(self) -> list[LiveFixture]:
         """Su anda canli olan tum maclari dondurur."""
 
+    def get_fixtures_by_date(self, date: str) -> list[LiveFixture]:
+        """Belirli bir gunun (YYYY-MM-DD) maclarini dondurur."""
+        return []
+
     @abstractmethod
     def get_fixture_statistics(self, provider_fixture_id: str) -> FixtureStatistics:
         """Bir macin canli/bitmis istatistiklerini dondurur."""

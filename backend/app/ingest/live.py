@@ -46,6 +46,21 @@ class LiveIngestService:
             db.refresh(m)
         return matches
 
+    def refresh_day(self, db: Session, date: str) -> list[Match]:
+        """Belirli bir gunun tum maclarini (baslamamis/dakika/bitmis) kaydeder."""
+        fixtures = self.provider.get_fixtures_by_date(date)
+        target = set(self.target_league_ids)
+        matches: list[Match] = []
+        for fx in fixtures:
+            if target and fx.league_provider_id not in target:
+                continue
+            match = self.normalizer.upsert_live_fixture(db, fx)
+            matches.append(match)
+        db.commit()
+        for m in matches:
+            db.refresh(m)
+        return matches
+
     def enrich_match(self, db: Session, match: Match) -> None:
         """Bir macin istatistik ve olaylarini ceker (mac basina 2 istek)."""
         stats = self.provider.get_fixture_statistics(match.provider_fixture_id)

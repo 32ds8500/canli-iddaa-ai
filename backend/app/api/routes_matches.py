@@ -116,6 +116,78 @@ def live_matches(
     return {"count": len(out), "matches": out}
 
 
+def _prediction_payload(db: Session, match: Match) -> dict:
+    if match.status_short in LIVE_SHORT_STATUSES:
+        bundle = run_models(db, match)
+        goal_keys = key_markets(bundle.goal)
+        corner_keys = key_markets(bundle.corner)
+        return {
+            "goal_sufficient": bundle.goal.sufficient,
+            "corner_sufficient": bundle.corner.sufficient,
+            "goal_insufficient_reason": bundle.goal.insufficient_reason,
+            "corner_insufficient_reason": bundle.corner.insufficient_reason,
+            "goal_confidence": bundle.goal.confidence,
+            "corner_confidence": bundle.corner.confidence,
+            "goal": goal_keys,
+            "corner": corner_keys,
+            "baseline": {
+                "goal_source": bundle.baseline.source,
+                "corner_source": bundle.baseline.source,
+                "sample_matches": bundle.baseline.sample_matches,
+                "note": bundle.baseline.note,
+            },
+        }
+    reason = "Mac baslamadi; tahmin mac baslayinca uretilir." if match.status_short in NOT_STARTED else "Mac bitti; tahmin uretilmez."
+    return {
+        "goal_sufficient": False,
+        "corner_sufficient": False,
+        "goal_insufficient_reason": reason,
+        "corner_insufficient_reason": reason,
+        "goal_confidence": 0.0,
+        "corner_confidence": 0.0,
+        "goal": {},
+        "corner": {},
+        "baseline": {
+            "goal_source": "—",
+            "corner_source": "—",
+            "sample_matches": 0,
+            "note": reason,
+        },
+    }
+
+
+@router.post("/matches/refresh-day")
+def refresh_day(
+    date: str = Query(..., description="YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+    ingest: LiveIngestService = Depends(get_ingest_dep),
+) -> dict:
+    try:
+        matches = ingest.refresh_day(db, date)
+    except ProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"refreshed": len(matches)}
+
+
+@router.get("/matches/day")
+def day_matches(
+    date: str = Query(..., description="YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+) -> dict:
+    matches = db.execute(select(Match).order_by(Match.kickoff_at)).scalars().all()
+    out = []
+    for match in matches:
+        if match.kickoff_at is None:
+            continue
+        if match.kickoff_at.date().isoformat() != date:
+            continue
+        item = serialize_match(db, match, include_stats=True)
+        item["predictions"] = _prediction_payload(db, match)
+        out.append(item)
+    out.sort(key=lambda x: x["kickoff_at"] or "")
+    return {"count": len(out), "matches": out}
+
+
 @router.get("/matches/{match_id}")
 def match_detail(match_id: str, db: Session = Depends(get_db)) -> dict:
     match = db.get(Match, match_id)

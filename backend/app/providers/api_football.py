@@ -230,6 +230,34 @@ class ApiFootballProvider(FootballProvider):
             )
         return out
 
+    def get_fixtures_by_date(self, date: str) -> list[LiveFixture]:
+        data = self._request("fixtures", {"date": date}, ttl=60)
+        out: list[LiveFixture] = []
+        for item in data.get("response", []):
+            fixture = item.get("fixture", {})
+            league = item.get("league", {})
+            teams = item.get("teams", {})
+            goals = item.get("goals", {})
+            status = fixture.get("status", {})
+            out.append(
+                LiveFixture(
+                    provider_fixture_id=str(fixture.get("id")),
+                    league_provider_id=str(league.get("id")),
+                    league_name=league.get("name", ""),
+                    league_country=league.get("country"),
+                    season=league.get("season"),
+                    home=TeamRef(str(teams.get("home", {}).get("id")), teams.get("home", {}).get("name", "")),
+                    away=TeamRef(str(teams.get("away", {}).get("id")), teams.get("away", {}).get("name", "")),
+                    kickoff_at=_parse_dt(fixture.get("date")),
+                    status_short=status.get("short", "NS"),
+                    status_long=status.get("long"),
+                    elapsed_minute=status.get("elapsed"),
+                    home_goals=goals.get("home"),
+                    away_goals=goals.get("away"),
+                )
+            )
+        return out
+
     def get_fixture_statistics(self, provider_fixture_id: str) -> FixtureStatistics:
         data = self._request(
             "fixtures/statistics", {"fixture": provider_fixture_id}, ttl=self.settings.stats_cache_ttl_seconds

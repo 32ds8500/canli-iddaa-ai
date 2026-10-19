@@ -44,6 +44,16 @@ export function fetchLiveMatches(filters: LiveFilters): Promise<{ count: number;
   return getJson(`/api/matches/live${qs ? `?${qs}` : ""}`);
 }
 
+export function fetchDayMatches(date: string): Promise<{ count: number; matches: LiveMatch[] }> {
+  return getJson(`/api/matches/day?date=${encodeURIComponent(date)}`);
+}
+
+export async function refreshDay(date: string): Promise<{ refreshed: number }> {
+  const res = await fetch(`${BASE}/api/matches/refresh-day?date=${encodeURIComponent(date)}`, { method: "POST" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export function fetchMatchDetail(id: string): Promise<MatchDetail> {
   return getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`);
 }

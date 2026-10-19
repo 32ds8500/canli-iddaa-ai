@@ -9,6 +9,7 @@ from app.api.deps import get_ingest_singleton, get_provider_singleton
 from app.config import get_settings
 from app.db import SessionLocal
 from app.eval.settlement import settle_finished_matches
+from app.services.prediction_service import persist_predictions, run_models
 from app.services.odds import OddsService
 from app.providers.base import NotConfiguredError, ProviderError
 
@@ -39,6 +40,8 @@ def refresh_live_job() -> None:
                 break
             try:
                 ingest.enrich_match(db, match)
+                bundle = run_models(db, match)
+                persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
             except ProviderError as exc:
                 logger.warning("Istatistik cekilemedi (%s): %s", match.id, exc)
     except NotConfiguredError:

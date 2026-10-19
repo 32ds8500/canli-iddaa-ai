@@ -168,6 +168,47 @@ def _resolve(pred: Prediction, match: Match, db: Session) -> tuple[int | None, s
         actual = 1 if a > th else 0
         return actual, ("hit" if actual else "miss"), f"dep korner {a}"
 
+    if market.startswith("goals_home_over_"):
+        if not finished:
+            return None, "unresolved", detail
+        th = float(market.replace("goals_home_over_", "").replace("_", "."))
+        actual = 1 if (match.home_goals or 0) > th else 0
+        return actual, ("hit" if actual else "miss"), f"ev gol {(match.home_goals or 0)}"
+    if market.startswith("goals_away_over_"):
+        if not finished:
+            return None, "unresolved", detail
+        th = float(market.replace("goals_away_over_", "").replace("_", "."))
+        actual = 1 if (match.away_goals or 0) > th else 0
+        return actual, ("hit" if actual else "miss"), f"dep gol {(match.away_goals or 0)}"
+    if market == "goal_btts":
+        if not finished:
+            return None, "unresolved", detail
+        actual = 1 if ((match.home_goals or 0) > 0 and (match.away_goals or 0) > 0) else 0
+        return actual, ("hit" if actual else "miss"), f"skor {match.home_goals}-{match.away_goals}"
+    if market in ("corner_next_home", "corner_next_away"):
+        if not finished:
+            return None, "unresolved", detail
+        snaps = _snapshots(db, match.id)
+        at_m = {side: _cum_corners_at(snaps, m, side) for side in ("home", "away")}
+        if any(v is None for v in at_m.values()):
+            return None, "unresolved", "Korner anlik goruntusu yetersiz."
+        first_minute: dict[str, int | None] = {"home": None, "away": None}
+        for side in ("home", "away"):
+            for snap in snaps.get(side, []):
+                if snap.minute <= m or snap.corners is None:
+                    continue
+                if snap.corners > (at_m[side] or 0):
+                    first_minute[side] = snap.minute
+                    break
+        hm, am = first_minute["home"], first_minute["away"]
+        if hm is None and am is None:
+            return None, "void", "Mac sonuna kadar korner olmadi."
+        if hm is not None and am is not None and hm == am:
+            return None, "unresolved", "Ayni dakikada iki taraf da korner kazandi; sira belirsiz."
+        winner = "home" if (am is None or (hm is not None and hm < am)) else "away"
+        actual = 1 if market == f"corner_next_{winner}" else 0
+        return actual, ("hit" if actual else "miss"), f"sonraki korner {winner} dk {hm if winner == 'home' else am}"
+
     return None, "unresolved", f"Bilinmeyen market: {market}"
 
 

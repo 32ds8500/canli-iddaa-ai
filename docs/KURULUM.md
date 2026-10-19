@@ -8,27 +8,38 @@ Termux/PRoot (aarch64, Ubuntu) ortamlarında da test edilmiştir.
 - Node.js 18+ ve npm (yalnızca arayüz için)
 - API-Football anahtarı (canlı veri için **zorunlu**)
 
-## 2. API anahtarı
-1. https://www.api-football.com adresinden ücretsiz hesap açıp bir API anahtarı alın.
-2. `backend/.env` dosyasını oluşturun:
-   ```bash
-   cp backend/.env.example backend/.env
+## 2. Sağlayıcı seçimi
+
+### A) FotMob — anahtar GEREKMEZ (önerilen)
+```bash
+cp backend/.env.example backend/.env
+# .env icinde: PROVIDER_MODE=fotmob
+```
+FotMob herkese açık JSON uçları kullanır; kayıt/anahtar gerekmez.
+Sağladığı alanlar: skor, dakika, şut, isabetli şut, korner, kart, topla oynama, xG.
+
+### B) API-Football — anahtar gerekir
+1. https://www.api-football.com adresinden ücretsiz hesap açıp API anahtarı alın.
+2. `.env` içinde:
    ```
-3. `.env` içinde şu satırı doldurun:
-   ```
+   PROVIDER_MODE=api-football
    API_FOOTBALL_KEY=sizin_anahtariniz
    ```
-   Anahtar **yalnızca sunucuda** kalır; tarayıcıya gönderilmez.
+   (RapidAPI üzerinden aldıysanız `RAPIDAPI_KEY=...` kullanın.)
+3. Anahtar **yalnızca sunucuda** kalır; tarayıcıya gönderilmez.
+4. Hesap askıya alınmışsa API `{"errors":{"access":"Your account is suspended..."}}` döner;
+   sistem bunu açıkça bildirir ve **sahte veri üretmez**.
 
 ## 3. Backend
 ```bash
 cd backend
 python3 -m pip install -r requirements.txt
-python3 scripts/verify_leagues.py
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+PROVIDER_MODE=fotmob python3 scripts/verify_leagues.py
+PROVIDER_MODE=fotmob uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 - `verify_leagues.py`, 7 organizasyonu gerçek sağlayıcı yanıtıyla doğrular ve sonucu veritabanına yazar.
-  - Anahtar yoksa: "API anahtarı tanımlı değil" deyip **çıkış kodu 2** ile biter (bu bir hata değil, uyarıdır).
+  - FotMob modunda anahtar gerekmez; 7/7 doğrulanır.
+  - API-Football modunda anahtar yoksa **çıkış kodu 2** ile biter (hata değil, uyarıdır).
   - Beklenmeyen bir organizasyon kimliği çıkarsa açıkça bildirir; **kimlikler asla varsayılmaz**.
 
 ### Ortam değişkenleri (öne çıkanlar)
@@ -36,7 +47,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 | Değişken | Açıklama | Varsayılan |
 |---|---|---|
-| `API_FOOTBALL_KEY` | Birincil sağlayıcı anahtarı | (boş) |
+| `PROVIDER_MODE` | `auto` / `fotmob` / `api-football` | `auto` |
+| `API_FOOTBALL_KEY` | API-Football anahtarı (opsiyonel) | (boş) |
+| `RAPIDAPI_KEY` | RapidAPI üzerinden API-Football | (boş) |
 | `DATABASE_URL` | Veritabanı adresi | `sqlite:///./data/canli_iddaa.db` |
 | `ENABLE_SCHEDULER` | Arka plan zamanlayıcı | `true` |
 | `LIVE_REFRESH_SECONDS` | Canlı yenileme aralığı | `45` |

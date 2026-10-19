@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     rapidapi_key: str = ""
     rapidapi_host: str = "api-football-v1.p.rapidapi.com"
 
+    # auto|api-football|fotmob
+    provider_mode: str = "auto"
+
     football_data_key: str = ""
     football_data_base_url: str = "https://api.football-data.org/v4"
 

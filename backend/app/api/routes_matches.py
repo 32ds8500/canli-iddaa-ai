@@ -207,7 +207,7 @@ def refresh_match(
     except ProviderError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     bundle = run_models(db, match)
-    created = persist_predictions(db, bundle, provider=match.provider)
+    created = persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
     settle_match(db, match)
     return {
         "match": serialize_match(db, match, include_stats=True),
@@ -230,7 +230,7 @@ def enrich_watchlist(
         try:
             ingest.enrich_match(db, match)
             bundle = run_models(db, match)
-            created = persist_predictions(db, bundle, provider=match.provider)
+            created = persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
             settle_match(db, match)
             results.append({"match_id": match.id, "predictions_created": created, "ok": True})
         except ProviderError as exc:

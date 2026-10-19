@@ -44,13 +44,13 @@ def status(db: Session = Depends(get_db), provider: FootballProvider = Depends(g
         "provider": {
             "name": provider.name,
             "configured": provider.is_configured(),
+            "mode": settings.provider_mode,
             "config_hint": None
             if provider.is_configured()
             else "API_FOOTBALL_KEY ortam degiskeni tanimli degil (.env). Anahtar olmadan canli veri alinamaz.",
         },
         "quota": quota,
-        "target_competitions": TARGET_COMPETITIONS,
-        "counts": {
+        "target_competitions": TARGET_COMPETITIONS,        "counts": {
             "leagues": league_count,
             "matches": match_count,
             "predictions": pred_count,

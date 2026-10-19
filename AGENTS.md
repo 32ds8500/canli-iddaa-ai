@@ -6,6 +6,11 @@ Bu dosya, projede çalışan geliştiriciler ve otomatik ajanlar için kısa yö
 Gerçek canlı futbol verisiyle **gol** ve **korner** olasılığı üreten analiz sistemi.
 Backend: FastAPI + SQLAlchemy + SQLite (`backend/`). Arayüz: React + TypeScript + Vite (`frontend/`).
 
+## Sağlayıcılar
+- **FotMob** (`app/providers/fotmob.py`): anahtarsız, varsayılan. xG/şut/korner/kart verir.
+- **API-Football** (`app/providers/api_football.py`): anahtar ister; hesap askıda olabilir.
+- Seçim `PROVIDER_MODE` (auto|fotmob|api-football) ile yapılır; `app/providers/__init__.py`.
+
 ## Sık kullanılan komutlar
 
 ### Backend
@@ -13,7 +18,7 @@ Backend: FastAPI + SQLAlchemy + SQLite (`backend/`). Arayüz: React + TypeScript
 cd backend
 python3 -m pip install -r requirements.txt
 python3 -m pytest -q                      # tüm testler (sahte sağlayıcı, ağ yok)
-python3 scripts/verify_leagues.py         # 7 organizasyonu gerçek API ile doğrular (anahtar gerekir)
+PROVIDER_MODE=fotmob python3 scripts/verify_leagues.py   # 7 organizasyonu gerçek yanıtla doğrular
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -31,6 +36,7 @@ npm run build      # tsc --noEmit && vite build -> dist/
 
 ## Mimari kurallar (bozmayın)
 - **Gerçek veri şart:** Asla sahte/simüle veriyle "tahmin" üretmeyin. Sahte veri yalnızca **testlerde** kullanılır.
+- **Bitmiş maça tahmin yok:** `persist_predictions(..., match_status=...)` bitmiş maçta 0 döner (sızıntı önleme).
 - **İki ayrı motor:** Gol ve korner mantığı `backend/app/engines/` altında ayrı kalmalı.
 - **Yetersiz veri:** İstatistik eksik/çelişkiliyse tahmin üretilmez; "Yetersiz veri" + gerekçe döner.
 - **Dürüst metrikler:** 30'dan az sonuçlanmış örnekte yüzde/performans gösterilmez.

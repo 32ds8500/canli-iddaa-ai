@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import League, Match, MatchEvent, MatchStat, Team
+from app.models import League, Match, MatchEvent, MatchStat, StatSnapshot, Team
 from app.providers.base import FixtureEvent, FixtureStatistics, LeagueDTO, LiveFixture
 
 # Durum kodlari -> insan okunur durum
@@ -148,6 +148,31 @@ class Normalizer:
             row.xg = ts.xg
             row.source = stats.source
             row.updated_at = _now()
+        self._record_snapshots(db, match, stats)
+
+    def _record_snapshots(self, db: Session, match: Match, stats: FixtureStatistics) -> None:
+        """Kumulatif istatistik anlik goruntusunu kaydeder (pencere/sonuclandirma icin)."""
+        minute = match.elapsed_minute
+        if minute is None:
+            return
+        for ts in stats.stats:
+            existing = db.execute(
+                select(StatSnapshot).where(
+                    StatSnapshot.match_id == match.id,
+                    StatSnapshot.side == ts.side,
+                    StatSnapshot.minute == minute,
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                existing = StatSnapshot(match_id=match.id, side=ts.side, minute=minute)
+                db.add(existing)
+            existing.shots_total = ts.shots_total
+            existing.shots_on = ts.shots_on
+            existing.corners = ts.corners
+            existing.dangerous_attacks = ts.dangerous_attacks
+            existing.possession = ts.possession
+            existing.xg = ts.xg
+            existing.fired_at = _now()
 
     def apply_events(self, db: Session, match: Match, events: list[FixtureEvent]) -> None:
         seen: set[str] = set()

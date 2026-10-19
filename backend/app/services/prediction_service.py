@@ -13,6 +13,8 @@ from app.engines.goal_model import GoalModel
 from app.engines.types import EngineResult
 from app.models import Match, Prediction
 
+FINISHED_STATUSES = {"FT", "AET", "PEN", "FINISHED"}
+
 _goal_model = GoalModel()
 _corner_model = CornerModel()
 
@@ -75,12 +77,23 @@ def run_models(db: Session, match: Match) -> MatchPredictionBundle:
     )
 
 
-def persist_predictions(db: Session, bundle: MatchPredictionBundle, provider: str) -> int:
+def persist_predictions(
+    db: Session,
+    bundle: MatchPredictionBundle,
+    provider: str,
+    *,
+    match_status: str | None = None,
+) -> int:
     """Yeterli olan tahminleri zaman damgasi ve model surumuyle kaydeder.
 
     Ayni mac/dakika/market icin ayni model surumu zaten kayitliysa tekrar yazmaz;
     boylece sürüm gecmisi korunur ve mukerrer kayit olusmaz.
+
+    Bitmis maclar icin tahmin kaydedilmez: sonucu bilinen bir macta uretilen
+    olasilik gecmis performans olarak sunulamaz (veri sizintisi olur).
     """
+    if match_status in FINISHED_STATUSES:
+        return 0
     created = 0
     feats = bundle.features
     for result in (bundle.goal, bundle.corner):

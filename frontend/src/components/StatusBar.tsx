@@ -31,13 +31,14 @@ export function StatusBar() {
   }
 
   const configured = status?.provider.configured ?? false;
+  const providerName = status?.provider.name ?? "";
 
   return (
     <header className="statusbar">
       <div className="statusbar__row">
         <div className="statusbar__title">CANLI İDDAA AI</div>
         <div className={`pill ${configured ? "pill--ok" : "pill--warn"}`}>
-          {configured ? "Sağlayıcı: bağlı" : "API anahtarı yok"}
+          {configured ? `Sağlayıcı: ${providerName}` : "Sağlayıcı bağlı değil"}
         </div>
       </div>
       {status && (

@@ -112,6 +112,10 @@ class FootballProvider(ABC):
     @abstractmethod
     def is_configured(self) -> bool: ...
 
+    def map_target_league_ids(self, target_ids: list[str]) -> list[str]:
+        """Hedef lig kimliklerini saglayicinin kendi kimliklerine cevirir."""
+        return list(target_ids)
+
     @abstractmethod
     def get_leagues(self, provider_league_ids: list[str] | None = None) -> list[LeagueDTO]:
         """Organizasyon meta verisi + veri kapsamini dondurur."""

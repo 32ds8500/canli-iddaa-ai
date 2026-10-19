@@ -137,7 +137,7 @@ export interface MatchDetail {
 
 export interface SystemStatus {
   server_time: string;
-  provider: { name: string; configured: boolean; config_hint: string | null };
+  provider: { name: string; configured: boolean; mode: string; config_hint: string | null };
   quota: {
     daily_limit: number;
     daily_used: number;

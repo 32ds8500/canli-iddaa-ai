@@ -7,8 +7,7 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.ingest.live import LiveIngestService
 from app.models import ApiUsageLog
-from app.providers import TARGET_LEAGUE_IDS
-from app.providers.api_football import ApiFootballProvider
+from app.providers import TARGET_LEAGUE_IDS, get_provider
 from app.providers.base import FootballProvider
 
 
@@ -24,12 +23,20 @@ def _usage_logger(endpoint: str, status_code: int | None, cached: bool) -> None:
 
 @lru_cache
 def get_provider_singleton() -> FootballProvider:
-    return ApiFootballProvider(get_settings(), usage_logger=_usage_logger)
+    settings = get_settings()
+    provider = get_provider(settings)
+    if provider.name == "api-football":
+        from app.providers.api_football import ApiFootballProvider
+
+        return ApiFootballProvider(settings, usage_logger=_usage_logger)
+    return provider
 
 
 @lru_cache
 def get_ingest_singleton() -> LiveIngestService:
-    return LiveIngestService(get_provider_singleton(), TARGET_LEAGUE_IDS)
+    provider = get_provider_singleton()
+    target = provider.map_target_league_ids(TARGET_LEAGUE_IDS)
+    return LiveIngestService(provider, target)
 
 
 def get_provider_dep() -> FootballProvider:

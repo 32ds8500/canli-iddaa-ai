@@ -1,0 +1,14 @@
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.git
+backend/.env
+backend/data
+data
+*.db
+*.sqlite
+*.sqlite3
+frontend/node_modules
+frontend/.vite

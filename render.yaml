@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: canli-iddaa-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: API_FOOTBALL_KEY
+        sync: false
+      - key: ENABLE_SCHEDULER
+        value: "true"
+      - key: LIVE_POLL_INTERVAL_SECONDS
+        value: "180"
+      - key: OUTCOME_SETTLE_INTERVAL_SECONDS
+        value: "300"
+      - key: DAILY_QUOTA
+        value: "100"
+      - key: PER_MINUTE_QUOTA
+        value: "10"
+      - key: QUOTA_RESERVE
+        value: "15"
+      - key: DATABASE_URL
+        value: "sqlite:///./data/app.db"

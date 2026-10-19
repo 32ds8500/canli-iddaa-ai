@@ -9,8 +9,6 @@ services:
     envVars:
       - key: PROVIDER_MODE
         value: "fotmob"
-      - key: API_FOOTBALL_KEY
-        sync: false
       - key: ENABLE_SCHEDULER
         value: "true"
       - key: LIVE_POLL_INTERVAL_SECONDS

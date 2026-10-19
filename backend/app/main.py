@@ -71,7 +71,14 @@ def _shutdown() -> None:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "provider_configured": settings.api_football_configured}
+    from app.providers import get_provider
+
+    provider = get_provider(settings)
+    return {
+        "status": "ok",
+        "provider": provider.name,
+        "provider_configured": provider.is_configured(),
+    }
 
 
 def _live_payload() -> dict:

@@ -91,7 +91,7 @@ def make_provider() -> FotMobProvider:
 def test_league_mapping_covers_all_targets() -> None:
     assert set(FOTMOB_LEAGUE_IDS) == {"203", "135", "140", "61", "2", "3", "848"}
     provider = make_provider()
-    assert provider.map_target_league_ids(["203", "2"]) == ["71", "42"]
+    assert provider.map_target_league_ids(["203", "2"]) == ["71", "943230"]
 
 
 def test_live_fixtures_filters_to_target_leagues() -> None:

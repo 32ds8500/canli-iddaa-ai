@@ -2,6 +2,9 @@
 
 Bu dosya, projede çalışan geliştiriciler ve otomatik ajanlar için kısa yönergeler içerir.
 
+## Zaman dilimi
+- Gun sinirlari `APP_UTC_OFFSET_HOURS` (varsayilan 3 = Turkiye) ile hesaplanir; saglayici tarihleri UTC gunudur, bu yuzden `refresh_day` bir onceki UTC gununu de ceker.
+
 ## Proje özeti
 Gerçek canlı futbol verisiyle **gol** ve **korner** olasılığı üreten analiz sistemi.
 Backend: FastAPI + SQLAlchemy + SQLite (`backend/`). Arayüz: React + TypeScript + Vite (`frontend/`).

@@ -13,6 +13,7 @@ from app.models import League, Match, MatchEvent, Prediction, PredictionOutcome,
 from app.providers.base import FootballProvider, ProviderError
 from app.services.match_view import key_markets, serialize_match
 from app.services.odds import OddsService, odds_for_match
+from app.timeutil import in_day
 from app.services.prediction_service import persist_predictions, run_models
 
 router = APIRouter(prefix="/api", tags=["matches"])
@@ -223,9 +224,7 @@ def day_matches(
     matches = db.execute(select(Match).order_by(Match.kickoff_at)).scalars().all()
     out = []
     for match in matches:
-        if match.kickoff_at is None:
-            continue
-        if match.kickoff_at.date().isoformat() != date:
+        if not in_day(match.kickoff_at, date):
             continue
         item = serialize_match(db, match, include_stats=True)
         item["predictions"] = _prediction_payload(db, match)

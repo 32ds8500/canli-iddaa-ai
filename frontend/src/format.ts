@@ -86,6 +86,13 @@ export function marketLabel(market: string): string {
   return market;
 }
 
+export function kickoffLabel(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
 export function barWidth(p: number | null | undefined): string {
   if (p === null || p === undefined) return "0%";
   return `${Math.max(0, Math.min(100, p * 100)).toFixed(1)}%`;

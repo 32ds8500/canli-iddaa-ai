@@ -1,5 +1,5 @@
 import type { LiveMatch, SideStats } from "../types";
-import { ageLabel, barWidth, marketLabel, num, pct, qualityLabel, statusLabel } from "../format";
+import { ageLabel, barWidth, kickoffLabel, marketLabel, num, pct, qualityLabel, statusLabel } from "../format";
 
 interface Props {
   match: LiveMatch;
@@ -65,7 +65,9 @@ export function MatchCard({ match, onOpen }: Props) {
         <span className="card__team card__team--right">{match.away.name ?? match.away.id}</span>
       </div>
 
-      <div className="card__stale muted">Güncelleme yaşı: {ageLabel(match.data_age_seconds)}</div>
+      <div className="card__stale muted">
+        Başlama: {kickoffLabel(match.kickoff_at)} · Güncelleme yaşı: {ageLabel(match.data_age_seconds)}
+      </div>
 
       {pred.source === "history" && (
         <div className="muted small pad-x">

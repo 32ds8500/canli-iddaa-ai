@@ -47,15 +47,37 @@ class LiveIngestService:
         return matches
 
     def refresh_day(self, db: Session, date: str) -> list[Match]:
-        """Belirli bir gunun tum maclarini (baslamamis/dakika/bitmis) kaydeder."""
-        fixtures = self.provider.get_fixtures_by_date(date)
+        """Yerel (UTC+3) gunun maclarini kaydeder.
+
+        Saglayici tarihleri UTC gunune gore listeler; yerel gun 21:00 UTC'de
+        basladigi icin bir onceki UTC gunu de cekilir, aksi halde 00:00-03:00
+        arasindaki maclar kacar.
+        """
+        from datetime import date as _date, timedelta
+
+        try:
+            local_day = _date.fromisoformat(date)
+        except ValueError:
+            local_day = None
+        provider_dates = [date]
+        if local_day is not None:
+            provider_dates.append((local_day - timedelta(days=1)).isoformat())
+
         target = set(self.target_league_ids)
+        seen: set[str] = set()
         matches: list[Match] = []
-        for fx in fixtures:
-            if target and fx.league_provider_id not in target:
-                continue
-            match = self.normalizer.upsert_live_fixture(db, fx)
-            matches.append(match)
+        for provider_date in provider_dates:
+            try:
+                fixtures = self.provider.get_fixtures_by_date(provider_date)
+            except ProviderError:
+                fixtures = []
+            for fx in fixtures:
+                if target and fx.league_provider_id not in target:
+                    continue
+                if fx.provider_fixture_id in seen:
+                    continue
+                seen.add(fx.provider_fixture_id)
+                matches.append(self.normalizer.upsert_live_fixture(db, fx))
         db.commit()
         for m in matches:
             db.refresh(m)

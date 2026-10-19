@@ -57,7 +57,10 @@ class Settings(BaseSettings):
     outcome_settle_interval_seconds: int = 300
     enable_scheduler: bool = True
 
-    # --- Arayuz ---
+    # --- Arayuz / saat dilimi ---
+    # Gun sinirlari ve gunluk kota bu ofsete gore hesaplanir.
+    # Turkiye 2016'dan beri kalici UTC+3 (yaz saati yok).
+    app_utc_offset_hours: int = 3
     cors_origins: str = "*"
 
     @property

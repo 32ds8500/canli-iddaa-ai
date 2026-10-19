@@ -36,9 +36,9 @@ FOTMOB_LEAGUE_IDS: dict[str, str] = {
     "135": "55",      # Italya Serie A
     "140": "87",      # Ispanya La Liga
     "61": "53",       # Fransa Ligue 1
-    "2": "42",        # UEFA Sampiyonlar Ligi
-    "3": "73",        # UEFA Avrupa Ligi
-    "848": "10216",   # UEFA Konferans Ligi
+    "2": "943230",    # UEFA Sampiyonlar Ligi
+    "3": "943229",    # UEFA Avrupa Ligi
+    "848": "943231",  # UEFA Konferans Ligi
 }
 FOTMOB_TO_TARGET = {v: k for k, v in FOTMOB_LEAGUE_IDS.items()}
 

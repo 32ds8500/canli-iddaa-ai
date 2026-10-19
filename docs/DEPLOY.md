@@ -8,7 +8,8 @@ Durumu kontrol: `https://dashboard.api-football.com` veya `verify_leagues.py`.
 ## Ortam değişkenleri (hepsi opsiyonel; anahtar zorunlu)
 | Değişken | Açıklama | Varsayılan |
 |---|---|---|
-| `API_FOOTBALL_KEY` | api-football anahtarı | (boş) |
+| `PROVIDER_MODE` | `auto` / `fotmob` / `api-football` | `fotmob` |
+| `API_FOOTBALL_KEY` | api-football anahtarı (opsiyonel) | (boş) |
 | `DATABASE_URL` | DB adresi | `sqlite:///./data/app.db` |
 | `ENABLE_SCHEDULER` | Arka plan tarayıcı | `true` |
 | `DAILY_QUOTA` / `PER_MINUTE_QUOTA` | Kota | `100` / `10` |
@@ -24,20 +25,21 @@ Durumu kontrol: `https://dashboard.api-football.com` veya `verify_leagues.py`.
 ## Seçenek A — Render (ücretsiz, önerilen)
 1. Projeyi GitHub'a gönderin (aşağıdaki Git adımları).
 2. Render → **New → Blueprint** → depoyu seçin. `render.yaml` otomatik okunur.
-3. `API_FOOTBALL_KEY` değerini Render panelinde girin (`sync: false`).
+3. `PROVIDER_MODE=fotmob` ön tanımlıdır; **API anahtarı gerekmez**.
+   API-Football kullanacaksanız `PROVIDER_MODE=api-football` yapıp `API_FOOTBALL_KEY` girin.
 4. Deploy. Sağlık kontrolü: `/api/health`.
 
 ## Seçenek B — Koyeb (ücretsiz)
 1. GitHub'a gönderin.
 2. Koyeb → **Create Service → GitHub** → **Dockerfile** builder.
-3. Ortam değişkenlerini (özellikle `API_FOOTBALL_KEY`) ekleyin. Port `8000`.
+3. Ortam değişkenlerini ekleyin (`PROVIDER_MODE=fotmob`). Port `8000`.
 
 ## Seçenek C — Fly.io (kalıcı volume, kart gerekebilir)
 ```bash
 fly launch --dockerfile Dockerfile
 fly volumes create data --size 1
 # fly.toml: [mounts] source="data" destination="/app/backend/data"
-fly secrets set API_FOOTBALL_KEY=...
+fly secrets set PROVIDER_MODE=fotmob
 fly deploy
 ```
 
@@ -68,7 +70,7 @@ git push -u origin main
 ## Docker ile yerel test (docker varsa)
 ```bash
 docker build -t canli-iddaa-ai .
-docker run --rm -p 8000:8000 -e API_FOOTBALL_KEY=... canli-iddaa-ai
+docker run --rm -p 8000:8000 -e PROVIDER_MODE=fotmob canli-iddaa-ai
 ```
 
 ## Üretim uyarıları

@@ -201,4 +201,29 @@ class CornerModel:
                 )
             )
 
+        # --- Siradaki korner ---
+        if lambda_total > 0:
+            next_home = lambda_home / lambda_total
+        else:
+            next_home = 0.5
+        result.predictions.append(
+            MarketPrediction(
+                market="corner_next_home",
+                probability=round(next_home, 4),
+                horizon_minutes=feats.remaining_minutes,
+                threshold=None,
+                rationale="Bir sonraki kornerin ev sahibi tarafindan kazanilmasi.",
+            )
+        )
+        result.predictions.append(
+            MarketPrediction(
+                market="corner_next_away",
+                probability=round(1 - next_home, 4),
+                horizon_minutes=feats.remaining_minutes,
+                threshold=None,
+                rationale="Bir sonraki kornerin deplasman tarafindan kazanilmasi.",
+            )
+        )
+
         return result
+

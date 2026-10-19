@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchMatchDetail, refreshMatch } from "../api";
-import type { EngineView, MatchDetail } from "../types";
+import { fetchMatchDetail, refreshMatch, refreshOdds } from "../api";
+import type { EngineView, MatchDetail, OddsItem } from "../types";
 import { ageLabel, barWidth, marketLabel, pct, qualityLabel, statusLabel } from "../format";
 
 interface Props {
@@ -42,6 +42,114 @@ function EnginePanel({ view }: { view: EngineView }) {
         </ul>
       )}
     </div>
+  );
+}
+
+
+function modelProb(market: string, goal: Record<string, number>): number | null {
+  const totals = market.match(/^totals_([\d.]+)_(over|under)$/);
+  if (totals) {
+    const key = `goals_total_over_${totals[1].replace(".", "_")}`;
+    const over = goal[key];
+    if (over === undefined) return null;
+    return totals[2] === "over" ? over : 1 - over;
+  }
+  return null;
+}
+
+function oddsLabel(market: string, selection: string): string {
+  if (market === "h2h") {
+    if (selection === "home") return "Ev sahibi";
+    if (selection === "draw") return "Beraberlik";
+    return "Deplasman";
+  }
+  const totals = market.match(/^totals_([\d.]+)_(over|under)$/);
+  if (totals) return `${totals[1]} ${totals[2] === "over" ? "Üst" : "Alt"}`;
+  return market;
+}
+
+function OddsPanel({ detail }: { detail: MatchDetail }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const goalMap: Record<string, number> = {};
+  detail.current_predictions.goal.predictions.forEach((p) => {
+    goalMap[p.market] = p.probability;
+  });
+  const best = new Map<string, OddsItem>();
+  (detail.odds ?? []).forEach((o) => {
+    const key = `${o.market}|${o.selection}`;
+    const prev = best.get(key);
+    if (!prev || o.price > prev.price) best.set(key, o);
+  });
+
+  const rows = Array.from(best.values()).filter((o) => o.market.startsWith("totals_") || o.market === "h2h");
+
+  const doRefresh = async () => {
+    setBusy(true);
+    try {
+      await refreshOdds();
+      setNote("Oranlar güncellendi.");
+    } catch (e) {
+      setNote(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="oddsbox">
+      <div className="oddsbox__head">
+        <h3>Oranlar</h3>
+        <button className="ghost" onClick={doRefresh} disabled={busy}>
+          {busy ? "Çekiliyor…" : "Oranları güncelle"}
+        </button>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="muted small">
+          Bağlı oran kaynağı yok. Sunucuda <code>ODDS_API_KEY</code> tanımlanınca gerçek oranlar ve
+          modelo göre değer (value) burada görünür. Oran uydurulmaz.
+        </div>
+      ) : (
+        <table className="statstable">
+          <thead>
+            <tr>
+              <th>Seçim</th>
+              <th>Oran</th>
+              <th>İma edilen</th>
+              <th>Model</th>
+              <th>Değer</th>
+              <th>Kaynak</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((o) => {
+              const mp = modelProb(o.market, goalMap);
+              const implied = o.implied_probability ?? 1 / o.price;
+              const value = mp === null ? null : mp - implied;
+              return (
+                <tr key={`${o.market}-${o.selection}-${o.bookmaker}`}>
+                  <td>{oddsLabel(o.market, o.selection)}</td>
+                  <td>{o.price.toFixed(2)}</td>
+                  <td>{pct(implied)}</td>
+                  <td>{mp === null ? "—" : pct(mp)}</td>
+                  <td className={value !== null && value > 0 ? "pos" : undefined}>
+                    {value === null ? "—" : `${value > 0 ? "+" : ""}${(value * 100).toFixed(1)}%`}
+                  </td>
+                  <td className="muted small">{o.bookmaker ?? "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      {note && <div className="muted small">{note}</div>}
+      <div className="muted small">
+        Değer = model olasılığı − oranın ima ettiği olasılık. Pozitif değer garanti değildir; marj ve
+        model hatası dikkate alınmalıdır.
+      </div>
+    </section>
   );
 }
 
@@ -119,6 +227,8 @@ export function MatchDetailView({ matchId, onBack }: Props) {
         <EnginePanel view={detail.current_predictions.goal} />
         <EnginePanel view={detail.current_predictions.corner} />
       </div>
+
+      <OddsPanel detail={detail} />
 
       <div className="detail__baseline muted small">
         Temel oran kaynağı: {detail.current_predictions.baseline.source} · örnek maç:{" "}

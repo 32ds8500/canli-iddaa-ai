@@ -64,6 +64,12 @@ export async function refreshLive(): Promise<{ refreshed: number }> {
   return res.json();
 }
 
+export async function refreshOdds(): Promise<{ stored: number }> {
+  const res = await fetch(`${BASE}/api/odds/refresh`, { method: "POST" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function enrichWatchlist(limit = 3): Promise<unknown> {
   const res = await fetch(`${BASE}/api/matches/enrich-watchlist?limit=${limit}`, { method: "POST" });
   if (!res.ok) throw new Error(await res.text());

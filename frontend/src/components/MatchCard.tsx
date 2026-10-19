@@ -6,14 +6,6 @@ interface Props {
   onOpen: (id: string) => void;
 }
 
-const TOP_MARKETS_GOAL = ["goal_next_5_min", "goal_next_10_min", "goal_next_15_min", "goal_rest_at_least_one"];
-const TOP_MARKETS_CORNER = [
-  "corner_next_5_min",
-  "corner_next_10_min",
-  "corner_next_15_min",
-  "corner_rest_at_least_one",
-];
-
 function SideStatsLine({ label, s }: { label: string; s: SideStats | null }) {
   if (!s) {
     return (
@@ -31,6 +23,16 @@ function SideStatsLine({ label, s }: { label: string; s: SideStats | null }) {
       <span title="Tehlikeli atak">Teh. atak {num(s.dangerous_attacks)}</span>
       <span title="Topla oynama">%{num(s.possession)}</span>
     </div>
+  );
+}
+
+function Chip({ label, value }: { label: string; value: number | undefined }) {
+  if (value === undefined) return null;
+  return (
+    <span className="mchip" title={`${label}: ${pct(value)}`}>
+      <span className="mchip__label">{label}</span>
+      <span className="mchip__value">{pct(value)}</span>
+    </span>
   );
 }
 
@@ -65,51 +67,59 @@ export function MatchCard({ match, onOpen }: Props) {
 
       <div className="card__stale muted">Güncelleme yaşı: {ageLabel(match.data_age_seconds)}</div>
 
-      <div className="probs">
-        <div className={`engine ${pred.goal_sufficient ? "" : "engine--insufficient"}`}>
-          <div className="engine__title">GOL {pred.goal_sufficient ? "" : "· Yetersiz veri"}</div>
-          {pred.goal_sufficient ? (
-            <ul className="probs__list">
-              {TOP_MARKETS_GOAL.map((m) =>
-                g[m] !== undefined ? (
-                  <li key={m}>
-                    <span className="probs__label">{marketLabel(m)}</span>
-                    <span className="probs__bar">
-                      <span style={{ width: barWidth(g[m]) }} />
-                    </span>
-                    <span className="probs__value">{pct(g[m])}</span>
-                  </li>
-                ) : null
-              )}
-            </ul>
-          ) : (
-            <div className="muted small">{pred.goal_insufficient_reason ?? "Yetersiz veri"}</div>
-          )}
-          <div className="engine__conf">Güven: {num(pred.goal_confidence, 2)}/1.0</div>
+      <div className="headline">
+        <div className={`hl ${pred.goal_sufficient ? "" : "hl--off"}`}>
+          <div className="hl__label">10 dk içinde gol</div>
+          <div className="hl__value">{pred.goal_sufficient ? pct(g["goal_next_10_min"]) : "—"}</div>
+          <div className="hl__bar">
+            <span style={{ width: pred.goal_sufficient ? barWidth(g["goal_next_10_min"]) : "0%" }} />
+          </div>
         </div>
-
-        <div className={`engine ${pred.corner_sufficient ? "" : "engine--insufficient"}`}>
-          <div className="engine__title">KORNER {pred.corner_sufficient ? "" : "· Yetersiz veri"}</div>
-          {pred.corner_sufficient ? (
-            <ul className="probs__list">
-              {TOP_MARKETS_CORNER.map((m) =>
-                c[m] !== undefined ? (
-                  <li key={m}>
-                    <span className="probs__label">{marketLabel(m)}</span>
-                    <span className="probs__bar">
-                      <span style={{ width: barWidth(c[m]) }} />
-                    </span>
-                    <span className="probs__value">{pct(c[m])}</span>
-                  </li>
-                ) : null
-              )}
-            </ul>
-          ) : (
-            <div className="muted small">{pred.corner_insufficient_reason ?? "Yetersiz veri"}</div>
-          )}
-          <div className="engine__conf">Güven: {num(pred.corner_confidence, 2)}/1.0</div>
+        <div className={`hl ${pred.corner_sufficient ? "" : "hl--off"}`}>
+          <div className="hl__label">10 dk içinde korner</div>
+          <div className="hl__value">{pred.corner_sufficient ? pct(c["corner_next_10_min"]) : "—"}</div>
+          <div className="hl__bar">
+            <span style={{ width: pred.corner_sufficient ? barWidth(c["corner_next_10_min"]) : "0%" }} />
+          </div>
         </div>
       </div>
+
+      {!pred.goal_sufficient && !pred.corner_sufficient && (
+        <div className="muted small pad-x">
+          {pred.goal_insufficient_reason ?? pred.corner_insufficient_reason ?? "Yetersiz veri"}
+        </div>
+      )}
+
+      {pred.goal_sufficient && (
+        <div className="mgroup">
+          <div className="mgroup__title">Gol marketleri</div>
+          <div className="mchips">
+            <Chip label="Sonraki 5 dk" value={g["goal_next_5_min"]} />
+            <Chip label="Sonraki 15 dk" value={g["goal_next_15_min"]} />
+            <Chip label="Kalan sürede gol" value={g["goal_rest_at_least_one"]} />
+            <Chip label={marketLabel("goals_total_over_2_5")} value={g["goals_total_over_2_5"]} />
+            <Chip label={marketLabel("goals_total_over_3_5")} value={g["goals_total_over_3_5"]} />
+            <Chip label={marketLabel("goal_btts")} value={g["goal_btts"]} />
+            <Chip label={marketLabel("goal_next_home")} value={g["goal_next_home"]} />
+            <Chip label={marketLabel("goal_next_away")} value={g["goal_next_away"]} />
+          </div>
+        </div>
+      )}
+
+      {pred.corner_sufficient && (
+        <div className="mgroup">
+          <div className="mgroup__title">Korner marketleri</div>
+          <div className="mchips">
+            <Chip label="Sonraki 5 dk" value={c["corner_next_5_min"]} />
+            <Chip label="Sonraki 15 dk" value={c["corner_next_15_min"]} />
+            <Chip label="Kalan sürede korner" value={c["corner_rest_at_least_one"]} />
+            <Chip label={marketLabel("corners_total_over_9_5")} value={c["corners_total_over_9_5"]} />
+            <Chip label={marketLabel("corners_total_over_10_5")} value={c["corners_total_over_10_5"]} />
+            <Chip label={marketLabel("corner_next_home")} value={c["corner_next_home"]} />
+            <Chip label={marketLabel("corner_next_away")} value={c["corner_next_away"]} />
+          </div>
+        </div>
+      )}
 
       <div className="card__stats">
         <SideStatsLine label={match.home.name ?? "Ev"} s={match.stats.home} />

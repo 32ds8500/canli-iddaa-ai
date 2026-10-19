@@ -137,7 +137,7 @@ def compute_features(db: Session, match: Match) -> MatchFeatures:
     provider_league_id = league.provider_league_id if league else ""
     baseline: Baseline = get_baseline(db, match.provider, provider_league_id)
 
-    minute = match.elapsed_minute or 0
+    minute = max(0, min(95, match.elapsed_minute or 0))
     remaining = max(0, REGULATION_MINUTES - minute)
 
     windows = _compute_windows(db, match.id)

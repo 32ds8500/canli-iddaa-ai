@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     # auto|api-football|fotmob
     provider_mode: str = "auto"
 
+    # --- Oranlar (opsiyonel; The Odds API ucretsiz plan) ---
+    odds_api_key: str = ""
+    odds_api_base_url: str = "https://api.the-odds-api.com/v4"
+    odds_regions: str = "eu"
+    odds_refresh_interval_seconds: int = 1800
+
     football_data_key: str = ""
     football_data_base_url: str = "https://api.football-data.org/v4"
 
@@ -57,6 +63,10 @@ class Settings(BaseSettings):
     @property
     def api_football_configured(self) -> bool:
         return bool(self.api_football_key.strip() or self.rapidapi_key.strip())
+
+    @property
+    def odds_configured(self) -> bool:
+        return bool(self.odds_api_key.strip())
 
     @property
     def football_data_configured(self) -> bool:

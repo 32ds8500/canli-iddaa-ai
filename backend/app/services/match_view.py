@@ -39,21 +39,8 @@ def latest_stats(db: Session, match_id: str) -> dict[str, MatchStat | None]:
 
 
 def key_markets(result: EngineResult) -> dict[str, float]:
-    """One cikan marketleri cikarir."""
-    out: dict[str, float] = {}
-    for p in result.predictions:
-        if p.market in (
-            "goal_next_10_min",
-            "goal_next_5_min",
-            "goal_next_15_min",
-            "goal_rest_at_least_one",
-            "corner_next_10_min",
-            "corner_next_5_min",
-            "corner_next_15_min",
-            "corner_rest_at_least_one",
-        ):
-            out[p.market] = p.probability
-    return out
+    """Motorun urettigi tum marketleri (market -> olasilik) dondurur."""
+    return {p.market: p.probability for p in result.predictions}
 
 
 def serialize_match(db: Session, match: Match, *, include_stats: bool = True) -> dict:

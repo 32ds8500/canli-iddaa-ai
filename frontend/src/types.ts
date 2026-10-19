@@ -81,6 +81,15 @@ export interface EngineView {
   predictions: PredItem[];
 }
 
+export interface OddsItem {
+  bookmaker: string | null;
+  market: string;
+  selection: string;
+  price: number;
+  implied_probability: number | null;
+  fetched_at: string | null;
+}
+
 export interface MatchDetail {
   id: string;
   league: LeagueInfo;
@@ -116,6 +125,7 @@ export interface MatchDetail {
     goal: EngineView;
     corner: EngineView;
   };
+  odds?: OddsItem[];
   prediction_history: Array<{
     id: number;
     created_at: string;

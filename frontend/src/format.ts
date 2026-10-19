@@ -50,17 +50,40 @@ export function statusLabel(short: string | null | undefined): string {
 }
 
 export function marketLabel(market: string): string {
-  const map: Record<string, string> = {
+  const fixed: Record<string, string> = {
     goal_next_5_min: "Önümüzdeki 5 dk gol",
     goal_next_10_min: "Önümüzdeki 10 dk gol",
     goal_next_15_min: "Önümüzdeki 15 dk gol",
     goal_rest_at_least_one: "Kalan sürede en az 1 gol",
+    goal_home_rest: "Kalan sürede ev golü",
+    goal_away_rest: "Kalan sürede deplasman golü",
+    goal_next_home: "Sonraki gol: Ev",
+    goal_next_away: "Sonraki gol: Dep",
+    goal_btts: "Karşılıklı gol (KG)",
     corner_next_5_min: "Önümüzdeki 5 dk korner",
     corner_next_10_min: "Önümüzdeki 10 dk korner",
     corner_next_15_min: "Önümüzdeki 15 dk korner",
     corner_rest_at_least_one: "Kalan sürede en az 1 korner",
+    corner_next_home: "Sonraki korner: Ev",
+    corner_next_away: "Sonraki korner: Dep",
+    corner_home_next_10_min: "10 dk içinde ev korneri",
+    corner_away_next_10_min: "10 dk içinde dep korneri",
   };
-  return map[market] ?? market;
+  if (fixed[market]) return fixed[market];
+
+  const over = market.match(/^goals_total_over_(\d+)_(\d+)$/);
+  if (over) return `Toplam ${over[1]}.${over[2]} Üst`;
+  const homeOver = market.match(/^goals_home_over_(\d+)_(\d+)$/);
+  if (homeOver) return `Ev ${homeOver[1]}.${homeOver[2]} Üst`;
+  const awayOver = market.match(/^goals_away_over_(\d+)_(\d+)$/);
+  if (awayOver) return `Dep ${awayOver[1]}.${awayOver[2]} Üst`;
+  const cTotal = market.match(/^corners_total_over_(\d+)_(\d+)$/);
+  if (cTotal) return `Korner ${cTotal[1]}.${cTotal[2]} Üst`;
+  const cHome = market.match(/^corners_home_over_(\d+)_(\d+)$/);
+  if (cHome) return `Ev korner ${cHome[1]}.${cHome[2]} Üst`;
+  const cAway = market.match(/^corners_away_over_(\d+)_(\d+)$/);
+  if (cAway) return `Dep korner ${cAway[1]}.${cAway[2]} Üst`;
+  return market;
 }
 
 export function barWidth(p: number | null | undefined): string {

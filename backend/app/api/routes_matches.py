@@ -12,6 +12,7 @@ from app.ingest.live import LIVE_SHORT_STATUSES, NOT_STARTED, LiveIngestService
 from app.models import League, Match, MatchEvent, Prediction, PredictionOutcome, StatSnapshot
 from app.providers.base import FootballProvider, ProviderError
 from app.services.match_view import key_markets, serialize_match
+from app.services.odds import OddsService, odds_for_match
 from app.services.prediction_service import persist_predictions, run_models
 
 router = APIRouter(prefix="/api", tags=["matches"])
@@ -188,12 +189,22 @@ def day_matches(
     return {"count": len(out), "matches": out}
 
 
+@router.post("/odds/refresh")
+def refresh_odds(db: Session = Depends(get_db)) -> dict:
+    service = OddsService()
+    if not service.is_configured():
+        raise HTTPException(status_code=503, detail="Oran kaynagi yapilandirilmamis (ODDS_API_KEY).")
+    stored = service.refresh(db)
+    return {"stored": stored}
+
+
 @router.get("/matches/{match_id}")
 def match_detail(match_id: str, db: Session = Depends(get_db)) -> dict:
     match = db.get(Match, match_id)
     if match is None:
         raise HTTPException(status_code=404, detail="Mac bulunamadi")
     data = serialize_match(db, match, include_stats=True)
+    data["odds"] = odds_for_match(db, match.id)
 
     events = db.execute(
         select(MatchEvent).where(MatchEvent.match_id == match.id).order_by(MatchEvent.minute)

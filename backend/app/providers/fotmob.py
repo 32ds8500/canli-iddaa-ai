@@ -13,7 +13,7 @@ Lig kimlikleri FotMob'a aittir (API-Football kimliklerinden farklidir).
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -326,6 +326,11 @@ def _parse_utc(value: Any) -> datetime | None:
 
 
 def _elapsed_minutes(status: dict) -> int | None:
+    """FotMob yari saatleri yerel saat diliminde verir; UTC'ye cevirir.
+
+    Saat dilimi, planlanan baslama (utcTime) ile ilk yari baslangici
+    arasindaki farktan turetilir. Boylece negatif/yanlis dakika olusmaz.
+    """
     halfs = status.get("halfs") or {}
     now = datetime.now(timezone.utc)
 
@@ -333,17 +338,32 @@ def _elapsed_minutes(status: dict) -> int | None:
         if not text:
             return None
         try:
-            return datetime.strptime(text, "%d.%m.%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+            return datetime.strptime(text, "%d.%m.%Y %H:%M:%S")
         except ValueError:
             return None
 
-    first = parse(halfs.get("firstHalfStarted"))
-    second = parse(halfs.get("secondHalfStarted"))
-    first_end = parse(halfs.get("firstHalfEnded"))
-    if second:
-        return min(90, 45 + int((now - second).total_seconds() // 60))
-    if first:
-        if first_end:
+    kickoff = _parse_utc(status.get("utcTime"))
+    first_naive = parse(halfs.get("firstHalfStarted"))
+    second_naive = parse(halfs.get("secondHalfStarted"))
+    first_end_naive = parse(halfs.get("firstHalfEnded"))
+
+    offset = timedelta(0)
+    if kickoff is not None and first_naive is not None:
+        offset = first_naive.replace(tzinfo=timezone.utc) - kickoff
+
+    def to_utc(value: datetime | None) -> datetime | None:
+        return value.replace(tzinfo=timezone.utc) - offset if value else None
+
+    second = to_utc(second_naive)
+    first = to_utc(first_naive)
+    first_end = to_utc(first_end_naive)
+
+    if second is not None:
+        return max(0, min(90, 45 + int((now - second).total_seconds() // 60)))
+    if first is not None:
+        if first_end is not None:
             return 45
-        return min(45, int((now - first).total_seconds() // 60))
+        return max(0, min(45, int((now - first).total_seconds() // 60)))
+    if kickoff is not None:
+        return max(0, min(90, int((now - kickoff).total_seconds() // 60)))
     return None

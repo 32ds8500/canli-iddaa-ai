@@ -79,6 +79,18 @@ npm run build                 # dist/ üretir; backend / arayüzü statik sunar
 
 ---
 
+### Üretilen marketler
+Gol motoru (25 market): önümüzdeki 5/10/15 dk gol, kalan sürede gol, ev/dep kalan gol,
+sonraki gol, karşılıklı gol (KG), toplam gol 1.5–4.5 üst, ev/dep toplam gol 0.5–2.5 üst.
+Korner motoru (14 market): önümüzdeki 5/10/15 dk korner, kalan sürede korner,
+toplam korner 7.5–10.5 üst, ev/dep korner 4.5–5.5 üst, sonraki korner (ev/dep).
+
+### Oranlar (opsiyonel)
+`ODDS_API_KEY` tanımlanırsa [The Odds API](https://the-odds-api.com) ücretsiz planından
+gerçek 1X2 ve toplam gol oranları çekilir; arayüzde ima edilen olasılık ve model farkı
+(değer) gösterilir. Anahtar yoksa **oran uydurulmaz**, bunun yerine kaynağın bağlı
+olmadığı açıkça yazılır.
+
 ## Test
 
 ```bash

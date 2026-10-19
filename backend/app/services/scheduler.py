@@ -9,6 +9,7 @@ from app.api.deps import get_ingest_singleton, get_provider_singleton
 from app.config import get_settings
 from app.db import SessionLocal
 from app.eval.settlement import settle_finished_matches
+from app.services.odds import OddsService
 from app.providers.base import NotConfiguredError, ProviderError
 
 logger = logging.getLogger("canli-iddaa.scheduler")
@@ -58,6 +59,19 @@ def settle_job() -> None:
         db.close()
 
 
+def refresh_odds_job() -> None:
+    service = OddsService()
+    if not service.is_configured():
+        return
+    db = SessionLocal()
+    try:
+        stored = service.refresh(db)
+        if stored:
+            logger.info("Oranlar guncellendi: %d kayit", stored)
+    finally:
+        db.close()
+
+
 def build_scheduler() -> BackgroundScheduler:
     settings = get_settings()
     scheduler = BackgroundScheduler(timezone="UTC")
@@ -69,6 +83,15 @@ def build_scheduler() -> BackgroundScheduler:
         max_instances=1,
         coalesce=True,
     )
+    if settings.odds_configured:
+        scheduler.add_job(
+            refresh_odds_job,
+            "interval",
+            seconds=settings.odds_refresh_interval_seconds,
+            id="refresh_odds",
+            max_instances=1,
+            coalesce=True,
+        )
     scheduler.add_job(
         settle_job,
         "interval",

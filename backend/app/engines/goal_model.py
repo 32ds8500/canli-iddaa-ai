@@ -229,4 +229,51 @@ class GoalModel:
                 )
             )
 
+        # --- Karsilikli gol (BTTS) ---
+        p_home_rest = prob_at_least_one(lambda_home, eff_rest)
+        p_away_rest = prob_at_least_one(lambda_away, eff_rest)
+        if feats.score_home > 0 and feats.score_away > 0:
+            p_btts = 1.0
+        elif feats.score_home > 0:
+            p_btts = p_away_rest
+        elif feats.score_away > 0:
+            p_btts = p_home_rest
+        else:
+            p_btts = p_home_rest * p_away_rest
+        result.predictions.append(
+            MarketPrediction(
+                market="goal_btts",
+                probability=round(p_btts, 4),
+                horizon_minutes=feats.remaining_minutes,
+                threshold=None,
+                rationale="Karsilikli gol: iki takim da mac boyunca en az bir gol atar.",
+            )
+        )
+
+        # --- Takim toplam gol esikleri (mac sonu) ---
+        for th in (0.5, 1.5, 2.5):
+            kh = int(math.floor(th - feats.score_home))
+            ph = poisson_sf(kh, lambda_home * eff_rest)
+            ka = int(math.floor(th - feats.score_away))
+            pa = poisson_sf(ka, lambda_away * eff_rest)
+            result.predictions.append(
+                MarketPrediction(
+                    market=f"goals_home_over_{str(th).replace('.', '_')}",
+                    probability=round(ph, 4),
+                    horizon_minutes=feats.remaining_minutes,
+                    threshold=th,
+                    rationale=f"Ev sahibi mac sonu toplam gol {th} ustu.",
+                )
+            )
+            result.predictions.append(
+                MarketPrediction(
+                    market=f"goals_away_over_{str(th).replace('.', '_')}",
+                    probability=round(pa, 4),
+                    horizon_minutes=feats.remaining_minutes,
+                    threshold=th,
+                    rationale=f"Deplasman mac sonu toplam gol {th} ustu.",
+                )
+            )
+
         return result
+

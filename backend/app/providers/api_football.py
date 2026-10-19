@@ -74,8 +74,13 @@ class ApiFootballProvider(FootballProvider):
         usage_logger: UsageLogger | None = None,
     ) -> None:
         self.settings = settings
-        self.base_url = settings.api_football_base_url.rstrip("/")
         self._key = settings.api_football_key.strip()
+        self._rapidapi_key = settings.rapidapi_key.strip()
+        self._rapidapi_host = settings.rapidapi_host.strip()
+        if self._rapidapi_key and not self._key:
+            self.base_url = f"https://{self._rapidapi_host}/v3"
+        else:
+            self.base_url = settings.api_football_base_url.rstrip("/")
         self._client = client or httpx.Client(timeout=settings.http_timeout_seconds)
         self._owns_client = client is None
         self._cache = cache or TTLCache()
@@ -89,13 +94,18 @@ class ApiFootballProvider(FootballProvider):
 
     # --- altyapi ---
     def is_configured(self) -> bool:
-        return bool(self._key)
+        return bool(self._key or self._rapidapi_key)
 
     def _require_key(self) -> None:
-        if not self._key:
-            raise NotConfiguredError("API-Football", "API_FOOTBALL_KEY")
+        if not self._key and not self._rapidapi_key:
+            raise NotConfiguredError("API-Football", "API_FOOTBALL_KEY veya RAPIDAPI_KEY")
 
     def _headers(self) -> dict[str, str]:
+        if self._rapidapi_key:
+            return {
+                "x-rapidapi-key": self._rapidapi_key,
+                "x-rapidapi-host": self._rapidapi_host,
+            }
         return {"x-apisports-key": self._key}
 
     def _request(self, path: str, params: dict[str, Any] | None = None, *, ttl: float | None = None) -> dict:

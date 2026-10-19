@@ -106,5 +106,24 @@ python3 -m pytest -q
 - `football-data.org` ücretsiz katmanı Süper Lig, Avrupa Ligi ve Konferans Ligi'ni **kapsamaz** ve canlı ayrıntılı istatistik sunmaz; yalnızca ikincil kaynak olarak belgelenmiştir.
 - xG her ligde bulunmayabilir; bulunmayan yerlerde model xG'siz çalışır ve bu durum belirtilir.
 
+## Yayın (deploy)
+
+### Render (ücretsiz, Docker)
+Depo: https://github.com/32ds8500/canli-iddaa-ai
+
+1. https://render.com adresinde GitHub ile giriş yapın.
+2. **New → Blueprint** seçip bu depoyu bağlayın; `render.yaml` otomatik okunur.
+3. `PROVIDER_MODE=fotmob` ön tanımlıdır; API anahtarı **gerekmez**.
+4. Health check: `/api/health`.
+
+Tek tık bağlantı: https://render.com/deploy?repo=https://github.com/32ds8500/canli-iddaa-ai
+
+> Render ücretsiz planı 15 dk trafiksizlikte uyur; ilk istekte ~30 sn'de açılır.
+
+### Cloudflare tüneli (anında, hesapsız)
+```bash
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
 ## Lisans
 Bu proje eğitim/analiz amaçlıdır. Kullanım sorumluluğu kullanıcıya aittir.

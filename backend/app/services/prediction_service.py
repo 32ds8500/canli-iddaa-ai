@@ -69,7 +69,7 @@ def _engine_to_api(result: EngineResult) -> dict:
 
 def run_models(db: Session, match: Match) -> MatchPredictionBundle:
     feats = compute_features(db, match)
-    baseline = get_baseline(db, match.provider, feats.league_provider_id)
+    baseline = get_baseline(db, match.provider, feats.league_provider_id)  # oturum onbellegi
     goal = _goal_model.run(feats, baseline)
     corner = _corner_model.run(feats, baseline)
     return MatchPredictionBundle(

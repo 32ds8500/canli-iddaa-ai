@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -9,11 +10,17 @@ from app.api.deps import get_ingest_singleton, get_provider_singleton
 from app.config import get_settings
 from app.db import SessionLocal
 from app.eval.settlement import settle_finished_matches
+from app.services import response_cache
+from app.services.payloads import warm_payload_cache
 from app.services.prediction_service import persist_predictions, run_models
 from app.services.odds import OddsService
 from app.providers.base import NotConfiguredError, ProviderError
 
 logger = logging.getLogger("canli-iddaa.scheduler")
+
+# Canli mac sayisi limitten fazlaysa turlar arasinda sirayla ilerlemek icin
+_live_cursor = 0
+
 
 def refresh_live_job() -> None:
     provider = get_provider_singleton()
@@ -24,28 +31,36 @@ def refresh_live_job() -> None:
     if quota is not None and not quota.can_call(cost=1):
         logger.warning("Gunluk kota yetersiz; canli yenileme atlandi (ucretli plana gecis yok).")
         return
+    global _live_cursor
     ingest = get_ingest_singleton()
     db = SessionLocal()
     try:
         matches = ingest.refresh_live(db)
         logger.info("Canli liste yenilendi: %d mac", len(matches))
-        # En uzun suredir guncellenmemis maclardan basla: her turda farkli
-        # maclar istatistik alir, boylece tum canli maclar zamanla kapsanir.
-        def _age(m: Match) -> float:
-            return m.last_updated_at.timestamp() if m.last_updated_at else 0.0
-
         settings = get_settings()
-        matches.sort(key=_age)
-        for idx, match in enumerate(matches[: settings.live_enrich_limit]):
-            if quota is not None and not quota.can_call(cost=2):
+        matches.sort(key=lambda m: (m.kickoff_at or datetime.min, m.id))
+        total = len(matches)
+        if total:
+            start = _live_cursor % total
+            take = min(settings.live_enrich_limit, total)
+            window = [matches[(start + i) % total] for i in range(take)]
+            _live_cursor = (start + take) % total
+        else:
+            window = []
+        for idx, match in enumerate(window):
+            if quota is not None and not quota.can_call(cost=1):
                 break
             try:
                 ingest.enrich_match(db, match, include_events=idx < 4)
-                bundle = run_models(db, match)
                 if idx < settings.live_persist_limit:
+                    bundle = run_models(db, match)
                     persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
             except ProviderError as exc:
                 logger.warning("Istatistik cekilemedi (%s): %s", match.id, exc)
+        try:
+            warm_payload_cache(db)
+        except Exception as exc:  # onbellek isinmasi basarisiz olsa da gorev surer
+            logger.warning("Liste onbellegi isitilamadi: %s", exc)
     except NotConfiguredError:
         pass
     except ProviderError as exc:
@@ -59,6 +74,8 @@ def settle_job() -> None:
     try:
         updated = settle_finished_matches(db)
         if updated:
+            response_cache.invalidate("live:")
+            response_cache.invalidate("day:")
             logger.info("Sonuclandirilan tahmin sayisi: %d", updated)
     finally:
         db.close()

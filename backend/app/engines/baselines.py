@@ -102,5 +102,18 @@ def estimate_baseline(db: Session, provider: str, provider_league_id: str) -> Ba
 
 
 def get_baseline(db: Session, provider: str, provider_league_id: str) -> Baseline:
+    """Baseline degerini oturum bazli onbellekle dondurur.
+
+    Ayni istek/gorev icinde ayni lig icin tekrar tekrar bitmis mac taramasi
+    yapmayi onler (canli listede onlarca mac ayni ligde olabiliyor). Onbellek
+    Session.info uzerinde tutuldugu icin oturum kapaninca duser, bayat veri
+    riski olusmaz.
+    """
+    cache = db.info.setdefault("baseline_cache", {})
+    key = (provider, provider_league_id)
+    if key in cache:
+        return cache[key]
     estimated = estimate_baseline(db, provider, provider_league_id)
-    return estimated or prior_baseline(provider_league_id)
+    value = estimated or prior_baseline(provider_league_id)
+    cache[key] = value
+    return value

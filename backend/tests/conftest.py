@@ -23,6 +23,16 @@ from app.db import Base, SessionLocal, engine  # noqa: E402
 from app import models  # noqa: E402,F401
 
 
+from app.services import response_cache  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clear_response_cache():
+    response_cache.invalidate()
+    yield
+    response_cache.invalidate()
+
+
 @pytest.fixture()
 def db():
     Base.metadata.drop_all(bind=engine)

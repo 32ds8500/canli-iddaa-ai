@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { enrichWatchlist, fetchLiveMatches, fetchMatchPreview, refreshLive } from "../api";
 import type { LiveFilters } from "../api";
 import type { LiveMatch, PrematchPreview } from "../types";
@@ -48,6 +48,18 @@ export function LiveBoard({ onOpen }: Props) {
     const t = setInterval(load, 20000);
     return () => clearInterval(t);
   }, [load]);
+
+  const autoLoaded = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const need = matches
+      .filter((m) => !m.predictions?.goal && !previews[m.id] && !autoLoaded.current.has(m.id))
+      .slice(0, 12);
+    need.forEach((m) => {
+      autoLoaded.current.add(m.id);
+      loadPreview(m.id);
+    });
+  }, [matches, previews]);
 
   const doRefresh = async () => {
     setBusy(true);

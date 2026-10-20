@@ -15,7 +15,7 @@ from app.services.match_view import key_markets, serialize_match
 from app.services.odds import OddsService, odds_for_match
 from app.timeutil import in_day
 from app.services.prediction_service import persist_predictions, run_models
-from app.services.prematch import PreviewTask, build_previews
+from app.services.prematch import PreviewTask, build_preview, build_previews
 
 router = APIRouter(prefix="/api", tags=["matches"])
 
@@ -237,6 +237,7 @@ def day_matches(
 @router.get("/matches/previews")
 def day_previews(
     date: str = Query(..., description="YYYY-MM-DD"),
+    limit: int = Query(12, ge=1, le=60, description="En fazla kac mac icin onizleme"),
     db: Session = Depends(get_db),
     provider: FootballProvider = Depends(get_provider_dep),
 ) -> dict:
@@ -258,9 +259,33 @@ def day_previews(
                 home_name=home.name if home else "",
                 away_name=away.name if away else "",
                 provider_fixture_id=match.provider_fixture_id,
+                kickoff_at=match.kickoff_at.isoformat() if match.kickoff_at else None,
             )
         )
-    return {"count": len(tasks), "previews": build_previews(provider, tasks)}
+    tasks.sort(key=lambda t: t.kickoff_at or "")
+    return {"count": len(tasks), "previews": build_previews(provider, tasks[:limit])}
+
+
+@router.get("/matches/{match_id}/preview")
+def match_preview(
+    match_id: str,
+    db: Session = Depends(get_db),
+    provider: FootballProvider = Depends(get_provider_dep),
+) -> dict:
+    match = db.get(Match, match_id)
+    if match is None:
+        raise HTTPException(status_code=404, detail="Mac bulunamadi")
+    home = db.get(Team, match.home_team_id)
+    away = db.get(Team, match.away_team_id)
+    preview = build_preview(
+        provider,
+        match.home_team_id.split(":", 1)[-1],
+        match.away_team_id.split(":", 1)[-1],
+        home.name if home else "",
+        away.name if away else "",
+        match.provider_fixture_id,
+    )
+    return {"match_id": match.id, "preview": preview}
 
 
 @router.post("/odds/refresh")

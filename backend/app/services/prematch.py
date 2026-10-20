@@ -277,6 +277,7 @@ class PreviewTask:
     home_name: str
     away_name: str
     provider_fixture_id: str | None = None
+    kickoff_at: str | None = None
 
 
 def build_previews(provider: FootballProvider, tasks: list[PreviewTask], workers: int = 4) -> dict[str, dict]:

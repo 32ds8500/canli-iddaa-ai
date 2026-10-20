@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # auto|api-football|fotmob
     provider_mode: str = "auto"
 
+    # all: gunun tum ligleri; selected: yalnizca TARGET_LEAGUE_IDS
+    league_scope: str = "all"
+
     # --- Oranlar (opsiyonel; The Odds API ucretsiz plan) ---
     odds_api_key: str = ""
     odds_api_base_url: str = "https://api.the-odds-api.com/v4"

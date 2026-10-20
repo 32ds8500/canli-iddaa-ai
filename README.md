@@ -18,11 +18,11 @@ Canlı futbol maçları için **gol** ve **korner** olasılıklarını ayrı mod
 - **Kayıt & ölçüm:** Her tahmin zaman damgası, dakika, skor, model adı/sürümü ve veri kalitesiyle saklanır. Maç bittiğinde sonuç eşleştirilir; Brier, LogLoss ve kalibrasyon hesaplanır.
 - **Kota dostu:** Günlük 100 / dakikada 10 istek sınırına uyar, kontenjan ayırır, asla otomatik ücretli plana geçmez.
 
-### 7 hedef organizasyon
-Türkiye Süper Lig, İtalya Serie A, İspanya La Liga, Fransa Ligue 1, UEFA Şampiyonlar Ligi, UEFA Avrupa Ligi, UEFA Konferans Ligi.
+### Lig kapsamı
+Varsayılan olarak **günün tüm ligleri ve tüm maçları** gösterilir (`LEAGUE_SCOPE=all`). Yalnızca öncelikli 7 organizasyonu (Türkiye Süper Lig, İtalya Serie A, İspanya La Liga, Fransa Ligue 1, UEFA Şampiyonlar Ligi, UEFA Avrupa Ligi, UEFA Konferans Ligi) izlemek için `LEAGUE_SCOPE=selected` kullanılır. Arayüzde lig filtresi ve takım araması vardır.
 
 > Sağlayıcı kimlikleri **varsayılmaz**; `scripts/verify_leagues.py` ile gerçek sağlayıcı yanıtından **doğrulanır**.
-> FotMob kimlikleri (71, 55, 87, 53, **943230, 943229, 943231**) gerçek `/api/data/matches` yanıtıyla doğrulanmıştır.
+> FotMob kimlikleri (71, 55, 87, 53, **943230, 943229, 943231**) gerçek `/api/data/matches` yanıtıyla doğrulanmıştır. `LEAGUE_SCOPE=all` iken sağlayıcının günlük fikstür yanıtındaki tüm ligler kullanılır.
 
 ---
 

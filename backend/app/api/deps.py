@@ -35,7 +35,8 @@ def get_provider_singleton() -> FootballProvider:
 @lru_cache
 def get_ingest_singleton() -> LiveIngestService:
     provider = get_provider_singleton()
-    target = provider.map_target_league_ids(TARGET_LEAGUE_IDS)
+    scope = get_settings().league_scope.strip().lower()
+    target = [] if scope == "all" else provider.map_target_league_ids(TARGET_LEAGUE_IDS)
     return LiveIngestService(provider, target)
 
 

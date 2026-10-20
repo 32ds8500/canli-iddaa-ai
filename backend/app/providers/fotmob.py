@@ -167,9 +167,6 @@ class FotMobProvider(FootballProvider):
         data = self._get("api/data/matches", {"date": today}, ttl=20)
         out: list[LiveFixture] = []
         for league in data.get("leagues", []):
-            fid = str(league.get("id"))
-            if fid not in FOTMOB_TO_TARGET:
-                continue
             for m in league.get("matches", []):
                 status = m.get("status") or {}
                 if not status.get("started") or status.get("finished") or status.get("cancelled"):
@@ -182,9 +179,6 @@ class FotMobProvider(FootballProvider):
         data = self._get("api/data/matches", {"date": compact}, ttl=60)
         out: list[LiveFixture] = []
         for league in data.get("leagues", []):
-            fid = str(league.get("id"))
-            if fid not in FOTMOB_TO_TARGET:
-                continue
             for m in league.get("matches", []):
                 out.append(self._to_fixture(league, m, m.get("status") or {}))
         return out

@@ -55,8 +55,15 @@ export async function refreshDay(date: string): Promise<{ refreshed: number }> {
   return res.json();
 }
 
-export function fetchPreviews(date: string): Promise<{ count: number; previews: Record<string, PrematchPreview> }> {
-  return getJson(`/api/matches/previews?date=${encodeURIComponent(date)}`);
+export function fetchPreviews(
+  date: string,
+  limit = 12,
+): Promise<{ count: number; previews: Record<string, PrematchPreview> }> {
+  return getJson(`/api/matches/previews?date=${encodeURIComponent(date)}&limit=${limit}`);
+}
+
+export function fetchMatchPreview(id: string): Promise<{ match_id: string; preview: PrematchPreview }> {
+  return getJson(`/api/matches/${encodeURIComponent(id)}/preview`);
 }
 
 export function fetchMatchDetail(id: string): Promise<MatchDetail> {

@@ -681,3 +681,41 @@ th {
   border-top: 1px dashed var(--border, #2a2f3a);
   padding-top: 6px;
 }
+
+.btn--sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  align-self: flex-start;
+}
+.league-group {
+  margin: 10px 0;
+  border: 1px solid var(--border, #2a2f3a);
+  border-radius: 10px;
+  padding: 0 10px;
+}
+.league-group > summary {
+  cursor: pointer;
+  padding: 10px 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  list-style: none;
+}
+.league-group > summary::-webkit-details-marker {
+  display: none;
+}
+.league-group > summary::before {
+  content: "▸";
+  color: #94a3b8;
+  font-size: 12px;
+}
+.league-group[open] > summary::before {
+  content: "▾";
+}
+.league-group__name {
+  flex: 1;
+}
+.league-group > .board__grid {
+  padding-bottom: 10px;
+}

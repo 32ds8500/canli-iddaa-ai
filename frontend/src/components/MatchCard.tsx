@@ -4,6 +4,8 @@ import { ageLabel, barWidth, kickoffLabel, marketLabel, num, pct, qualityLabel, 
 interface Props {
   match: LiveMatch;
   preview?: PrematchPreview;
+  previewBusy?: boolean;
+  onPreview?: (id: string) => void;
   onOpen: (id: string) => void;
 }
 
@@ -115,7 +117,7 @@ function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
   );
 }
 
-export function MatchCard({ match, preview, onOpen }: Props) {
+export function MatchCard({ match, preview, previewBusy, onPreview, onOpen }: Props) {
   const q = qualityLabel(match.data_quality);
   const isUpcoming = match.status.short === "NS" || match.status.short === "TBD";
   const pred = match.predictions;
@@ -149,7 +151,24 @@ export function MatchCard({ match, preview, onOpen }: Props) {
         Başlama: {kickoffLabel(match.kickoff_at)} · Güncelleme yaşı: {ageLabel(match.data_age_seconds)}
       </div>
 
-      {isUpcoming && <PrematchBlock preview={preview} />}
+      {isUpcoming &&
+        (preview ? (
+          <PrematchBlock preview={preview} />
+        ) : (
+          <div className="prebox">
+            <div className="mgroup__title">Maç öncesi</div>
+            <button
+              className="btn btn--sm"
+              disabled={previewBusy}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview?.(match.id);
+              }}
+            >
+              {previewBusy ? "Yükleniyor…" : "Form, H2H ve tahmini göster"}
+            </button>
+          </div>
+        ))}
 
       {!isUpcoming && (
         <>

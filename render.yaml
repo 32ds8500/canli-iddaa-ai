@@ -11,6 +11,8 @@ services:
         value: "3"
       - key: PROVIDER_MODE
         value: "fotmob"
+      - key: LEAGUE_SCOPE
+        value: "all"
       - key: ENABLE_SCHEDULER
         value: "true"
       - key: LIVE_POLL_INTERVAL_SECONDS

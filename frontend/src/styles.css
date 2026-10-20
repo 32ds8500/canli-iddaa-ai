@@ -613,3 +613,71 @@ th {
 .oddsbox__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .oddsbox__head h3 { margin: 6px 0; }
 .pos { color: #34d399; font-weight: 700; }
+
+/* --- Mac oncesi onizleme --- */
+.prebox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #2a2f3a);
+  border-radius: 10px;
+  background: rgba(120, 160, 255, 0.05);
+}
+.prebar {
+  display: flex;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0b0f16;
+}
+.prebar__seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.prebar__seg--1 { background: #4ade80; }
+.prebar__seg--x { background: #94a3b8; }
+.prebar__seg--2 { background: #60a5fa; }
+.preform {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.preform__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.preform__team {
+  font-weight: 600;
+  min-width: 6.5em;
+}
+.formchips {
+  display: inline-flex;
+  gap: 3px;
+}
+.formchip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0b0f16;
+}
+.formchip--w { background: #4ade80; }
+.formchip--d { background: #94a3b8; }
+.formchip--l { background: #f87171; }
+.preh2h {
+  border-top: 1px dashed var(--border, #2a2f3a);
+  padding-top: 6px;
+}

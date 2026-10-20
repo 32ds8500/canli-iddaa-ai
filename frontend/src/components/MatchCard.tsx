@@ -1,8 +1,9 @@
-import type { LiveMatch, SideStats } from "../types";
+import type { LiveMatch, PrematchPreview, SideStats } from "../types";
 import { ageLabel, barWidth, kickoffLabel, marketLabel, num, pct, qualityLabel, statusLabel } from "../format";
 
 interface Props {
   match: LiveMatch;
+  preview?: PrematchPreview;
   onOpen: (id: string) => void;
 }
 
@@ -36,8 +37,87 @@ function Chip({ label, value }: { label: string; value: number | undefined }) {
   );
 }
 
-export function MatchCard({ match, onOpen }: Props) {
+function FormChips({ form }: { form: string[] }) {
+  return (
+    <span className="formchips">
+      {form.slice(0, 5).map((r, i) => (
+        <span key={i} className={`formchip formchip--${r.toLowerCase()}`}>
+          {r === "W" ? "G" : r === "D" ? "B" : "M"}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
+  if (!preview) {
+    return <div className="muted small pad-x">Maç öncesi önizleme yükleniyor…</div>;
+  }
+  const p = preview.prediction;
+  const h = preview.home;
+  const a = preview.away;
+  const h2h = preview.h2h;
+  const last = h2h.matches[0];
+  return (
+    <div className="prebox">
+      <div className="mgroup__title">Maç öncesi tahmin</div>
+      {p ? (
+        <>
+          <div className="prebar">
+            <span className="prebar__seg prebar__seg--1" style={{ width: `${p.markets.home_win * 100}%` }}>
+              1 {pct(p.markets.home_win)}
+            </span>
+            <span className="prebar__seg prebar__seg--x" style={{ width: `${p.markets.draw * 100}%` }}>
+              X {pct(p.markets.draw)}
+            </span>
+            <span className="prebar__seg prebar__seg--2" style={{ width: `${p.markets.away_win * 100}%` }}>
+              2 {pct(p.markets.away_win)}
+            </span>
+          </div>
+          <div className="mchips">
+            <Chip label="2.5 Üst" value={p.markets.over_2_5} />
+            <Chip label="KG" value={p.markets.btts} />
+            <Chip label="1X" value={p.markets.dc_1x} />
+            <Chip label="X2" value={p.markets.dc_x2} />
+            <Chip label="3.5 Üst" value={p.markets.over_3_5} />
+          </div>
+          <div className="muted small">
+            Beklenen gol: {p.lambda_home} - {p.lambda_away}
+          </div>
+        </>
+      ) : (
+        <div className="muted small">Bu maç için yeterli geçmiş veri yok.</div>
+      )}
+      <div className="preform">
+        <div className="preform__row">
+          <span className="preform__team">{h.name}</span>
+          <FormChips form={h.form} />
+          <span className="muted small">
+            Son {h.played}: {h.wins}G {h.draws}B {h.losses}M · {h.gf}-{h.ga}
+          </span>
+        </div>
+        <div className="preform__row">
+          <span className="preform__team">{a.name}</span>
+          <FormChips form={a.form} />
+          <span className="muted small">
+            Son {a.played}: {a.wins}G {a.draws}B {a.losses}M · {a.gf}-{a.ga}
+          </span>
+        </div>
+      </div>
+      {h2h.played > 0 && (
+        <div className="preh2h muted small">
+          Aralarında son {h2h.played} ({h.name} bakışıyla): {h2h.wins}G {h2h.draws}B {h2h.losses}M
+          {last ? ` · Son: ${last.home} ${last.score} ${last.away}` : ""}
+        </div>
+      )}
+      {p && <div className="muted small">{p.note}</div>}
+    </div>
+  );
+}
+
+export function MatchCard({ match, preview, onOpen }: Props) {
   const q = qualityLabel(match.data_quality);
+  const isUpcoming = match.status.short === "NS" || match.status.short === "TBD";
   const pred = match.predictions;
   const g = pred.goal;
   const c = pred.corner;
@@ -69,6 +149,10 @@ export function MatchCard({ match, onOpen }: Props) {
         Başlama: {kickoffLabel(match.kickoff_at)} · Güncelleme yaşı: {ageLabel(match.data_age_seconds)}
       </div>
 
+      {isUpcoming && <PrematchBlock preview={preview} />}
+
+      {!isUpcoming && (
+        <>
       {pred.source === "history" && (
         <div className="muted small pad-x">
           Maç bitti · {pred.as_of_minute != null ? `${pred.as_of_minute}. dakikada` : "maç sırasında"} kaydedilen tahminler
@@ -138,6 +222,8 @@ export function MatchCard({ match, onOpen }: Props) {
         Temel oran kaynağı: {pred.baseline.goal_source} · örnek maç: {pred.baseline.sample_matches}
         {pred.baseline.note ? ` · ${pred.baseline.note}` : ""}
       </div>
+        </>
+      )}
     </article>
   );
 }

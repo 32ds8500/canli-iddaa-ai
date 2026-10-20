@@ -188,3 +188,49 @@ export interface PerfSegment {
     }>;
   } | null;
 }
+
+export interface RecentFormItem {
+  date: string;
+  home: boolean;
+  opponent: string | null;
+  score: string;
+  competition: string | null;
+}
+
+export interface PrematchTeamForm {
+  team_id: string;
+  name: string;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  gf: number;
+  ga: number;
+  avg_gf: number | null;
+  avg_ga: number | null;
+  over25_rate: number | null;
+  btts_rate: number | null;
+  form: string[];
+  recent: RecentFormItem[];
+  basis: string;
+}
+
+export interface H2HItem {
+  date: string;
+  home: string | null;
+  away: string | null;
+  score: string;
+  competition: string | null;
+}
+
+export interface PrematchPreview {
+  home: PrematchTeamForm;
+  away: PrematchTeamForm;
+  h2h: { played: number; wins: number; draws: number; losses: number; matches: H2HItem[] };
+  prediction: {
+    lambda_home: number;
+    lambda_away: number;
+    markets: Record<string, number>;
+    note: string;
+  } | null;
+}

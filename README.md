@@ -13,6 +13,7 @@ Canlı futbol maçları için **gol** ve **korner** olasılıklarını ayrı mod
   - **API-Football / api-sports.io** (anahtar gerekir): aynı alanlar + tehlikeli atak.
   - `PROVIDER_MODE` ile seçilir: `auto` (anahtar varsa API-Football, yoksa FotMob), `fotmob`, `api-football`.
 - **İki ayrı motor:** Gol olasılıkları ve korner olasılıkları birbirinden bağımsız hesaplanır.
+- **Maç öncesi önizleme:** Başlamamış maçlarda son 10 maç formu (G/B/M, gol istatistikleri), iki takımın geçmiş karşılaşmaları (H2H) ve Poisson tabanlı maç öncesi tahmin (1X2, 2.5 Üst, KG, çifte şans) gösterilir.
 - **Veri kalitesi:** İstatistik eksik/çelişkili olduğunda o tahmin üretilmez; arayüzde "Yetersiz veri" ve gerekçesi gösterilir.
 - **Kayıt & ölçüm:** Her tahmin zaman damgası, dakika, skor, model adı/sürümü ve veri kalitesiyle saklanır. Maç bittiğinde sonuç eşleştirilir; Brier, LogLoss ve kalibrasyon hesaplanır.
 - **Kota dostu:** Günlük 100 / dakikada 10 istek sınırına uyar, kontenjan ayırır, asla otomatik ücretli plana geçmez.
@@ -21,7 +22,7 @@ Canlı futbol maçları için **gol** ve **korner** olasılıklarını ayrı mod
 Türkiye Süper Lig, İtalya Serie A, İspanya La Liga, Fransa Ligue 1, UEFA Şampiyonlar Ligi, UEFA Avrupa Ligi, UEFA Konferans Ligi.
 
 > Sağlayıcı kimlikleri **varsayılmaz**; `scripts/verify_leagues.py` ile gerçek sağlayıcı yanıtından **doğrulanır**.
-> FotMob kimlikleri (71, 55, 87, 53, 42, 73, 10216) `/api/data/allLeagues` yanıtıyla doğrulanmıştır.
+> FotMob kimlikleri (71, 55, 87, 53, **943230, 943229, 943231**) gerçek `/api/data/matches` yanıtıyla doğrulanmıştır.
 
 ---
 
@@ -55,6 +56,9 @@ frontend/                # React + TypeScript (Vite) mobil öncelikli arayüz
 Ayrıntılı adımlar ve sorun giderme için: [`docs/KURULUM.md`](docs/KURULUM.md).
 
 ```bash
+# Gunluk onizleme
+curl 'http://127.0.0.1:8000/api/matches/previews?date=2026-10-20'
+
 # 1) Backend (anahtarsiz, FotMob ile)
 cd backend
 cp .env.example .env

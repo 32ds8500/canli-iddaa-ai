@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchDayMatches, refreshDay } from "../api";
-import type { LiveMatch } from "../types";
+import { fetchDayMatches, fetchPreviews, refreshDay } from "../api";
+import type { LiveMatch, PrematchPreview } from "../types";
 import { MatchCard } from "./MatchCard";
 
 interface Props {
@@ -16,6 +16,7 @@ function todayIso(): string {
 export function TodayBoard({ onOpen }: Props) {
   const [date, setDate] = useState(todayIso());
   const [matches, setMatches] = useState<LiveMatch[]>([]);
+  const [previews, setPreviews] = useState<Record<string, PrematchPreview>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,25 @@ export function TodayBoard({ onOpen }: Props) {
     setLoading(true);
     load(true);
   }, [load]);
+
+  useEffect(() => {
+    const hasUpcoming = matches.some((m) => m.status.short === "NS" || m.status.short === "TBD");
+    if (!hasUpcoming) {
+      setPreviews({});
+      return;
+    }
+    let cancelled = false;
+    fetchPreviews(date)
+      .then((r) => {
+        if (!cancelled) setPreviews(r.previews ?? {});
+      })
+      .catch(() => {
+        /* onizleme opsiyonel */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [matches, date]);
 
   const doRefresh = async () => {
     setBusy(true);
@@ -82,14 +102,14 @@ export function TodayBoard({ onOpen }: Props) {
       {live.length > 0 && <h2 className="section-title">Canlı</h2>}
       <div className="board__grid">
         {live.map((m) => (
-          <MatchCard key={m.id} match={m} onOpen={onOpen} />
+          <MatchCard key={m.id} match={m} preview={previews[m.id]} onOpen={onOpen} />
         ))}
       </div>
 
       {others.length > 0 && <h2 className="section-title">Diğer maçlar</h2>}
       <div className="board__grid">
         {others.map((m) => (
-          <MatchCard key={m.id} match={m} onOpen={onOpen} />
+          <MatchCard key={m.id} match={m} preview={previews[m.id]} onOpen={onOpen} />
         ))}
       </div>
     </section>

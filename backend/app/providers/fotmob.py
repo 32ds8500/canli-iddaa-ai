@@ -189,6 +189,72 @@ class FotMobProvider(FootballProvider):
                 out.append(self._to_fixture(league, m, m.get("status") or {}))
         return out
 
+    def get_team_matches(self, team_id: str) -> list[dict]:
+        """Takimin tum sezon maclari (form ve H2H icin).
+
+        FotMob `fixtures.allFixtures.fixtures` hem bitmis hem gelecek maclari
+        skorlariyla dondurur; dostluk maclari da bulunur, servis tarafinda
+        elenir.
+        """
+        data = self._get("api/data/teams", {"id": str(team_id)}, ttl=1800)
+        raw = (((data.get("fixtures") or {}).get("allFixtures") or {}).get("fixtures")) or []
+        out: list[dict] = []
+        for m in raw:
+            status = m.get("status") or {}
+            home = m.get("home") or {}
+            away = m.get("away") or {}
+            out.append(
+                {
+                    "id": str(m.get("id")),
+                    "kickoff": status.get("utcTime"),
+                    "finished": bool(status.get("finished")),
+                    "cancelled": bool(status.get("cancelled")),
+                    "tournament": (m.get("tournament") or {}).get("name") or "",
+                    "home_id": str(home.get("id") or ""),
+                    "away_id": str(away.get("id") or ""),
+                    "home_name": home.get("name") or "",
+                    "away_name": away.get("name") or "",
+                    "home_goals": home.get("score"),
+                    "away_goals": away.get("score"),
+                }
+            )
+        return out
+
+    def get_h2h(self, provider_fixture_id: str) -> list[dict]:
+        """FotMob mac detayindaki karsilikli gecmis (tum sezonlar)."""
+        data = self._get("api/data/matchDetails", {"matchId": str(provider_fixture_id)}, ttl=600)
+        h2h = (data.get("content") or {}).get("h2h") or {}
+        out: list[dict] = []
+        for m in h2h.get("matches") or []:
+            status = m.get("status") or {}
+            if not status.get("finished") or status.get("cancelled"):
+                continue
+            score = (status.get("scoreStr") or "").split("-")
+            if len(score) != 2:
+                continue
+            home = m.get("home") or {}
+            away = m.get("away") or {}
+            try:
+                hg, ag = int(score[0].strip()), int(score[1].strip())
+            except ValueError:
+                continue
+            out.append(
+                {
+                    "id": (m.get("matchUrl") or "").split("#")[-1],
+                    "kickoff": (m.get("time") or {}).get("utcTime"),
+                    "finished": True,
+                    "cancelled": False,
+                    "tournament": (m.get("league") or {}).get("name") or "",
+                    "home_id": str(home.get("id") or ""),
+                    "away_id": str(away.get("id") or ""),
+                    "home_name": home.get("name") or "",
+                    "away_name": away.get("name") or "",
+                    "home_goals": hg,
+                    "away_goals": ag,
+                }
+            )
+        return out
+
     def _to_fixture(self, league: dict, m: dict, status: dict) -> LiveFixture:
         fid = str(league.get("id"))
         home = m.get("home") or {}

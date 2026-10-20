@@ -9,12 +9,13 @@ from app.api.deps import get_ingest_dep, get_provider_dep
 from app.db import get_db
 from app.eval.settlement import settle_match
 from app.ingest.live import LIVE_SHORT_STATUSES, NOT_STARTED, LiveIngestService
-from app.models import League, Match, MatchEvent, Prediction, PredictionOutcome, StatSnapshot
+from app.models import League, Match, MatchEvent, Prediction, PredictionOutcome, StatSnapshot, Team
 from app.providers.base import FootballProvider, ProviderError
 from app.services.match_view import key_markets, serialize_match
 from app.services.odds import OddsService, odds_for_match
 from app.timeutil import in_day
 from app.services.prediction_service import persist_predictions, run_models
+from app.services.prematch import PreviewTask, build_previews
 
 router = APIRouter(prefix="/api", tags=["matches"])
 
@@ -231,6 +232,35 @@ def day_matches(
         out.append(item)
     out.sort(key=lambda x: x["kickoff_at"] or "")
     return {"count": len(out), "matches": out}
+
+
+@router.get("/matches/previews")
+def day_previews(
+    date: str = Query(..., description="YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+    provider: FootballProvider = Depends(get_provider_dep),
+) -> dict:
+    """Gunu henuz baslamamis maclari icin form/H2H ve mac oncesi tahmin."""
+    matches = db.execute(select(Match).order_by(Match.kickoff_at)).scalars().all()
+    tasks: list[PreviewTask] = []
+    for match in matches:
+        if match.status_short not in NOT_STARTED:
+            continue
+        if not in_day(match.kickoff_at, date):
+            continue
+        home = db.get(Team, match.home_team_id)
+        away = db.get(Team, match.away_team_id)
+        tasks.append(
+            PreviewTask(
+                match_id=match.id,
+                home_id=match.home_team_id.split(":", 1)[-1],
+                away_id=match.away_team_id.split(":", 1)[-1],
+                home_name=home.name if home else "",
+                away_name=away.name if away else "",
+                provider_fixture_id=match.provider_fixture_id,
+            )
+        )
+    return {"count": len(tasks), "previews": build_previews(provider, tasks)}
 
 
 @router.post("/odds/refresh")

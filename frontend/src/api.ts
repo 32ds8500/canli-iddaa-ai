@@ -2,6 +2,7 @@ import type {
   LiveMatch,
   MatchDetail,
   PerfSegment,
+  PrematchPreview,
   SystemStatus,
 } from "./types";
 
@@ -52,6 +53,10 @@ export async function refreshDay(date: string): Promise<{ refreshed: number }> {
   const res = await fetch(`${BASE}/api/matches/refresh-day?date=${encodeURIComponent(date)}`, { method: "POST" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
+}
+
+export function fetchPreviews(date: string): Promise<{ count: number; previews: Record<string, PrematchPreview> }> {
+  return getJson(`/api/matches/previews?date=${encodeURIComponent(date)}`);
 }
 
 export function fetchMatchDetail(id: string): Promise<MatchDetail> {

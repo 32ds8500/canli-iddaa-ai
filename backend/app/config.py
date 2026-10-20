@@ -57,6 +57,10 @@ class Settings(BaseSettings):
 
     # --- Zamanlanmis gorevler ---
     live_poll_interval_seconds: int = 180
+    # Bir turda istatistigi cekilecek canli mac sayisi (FotMob ucretsiz; API-Football kotaya takilir)
+    live_enrich_limit: int = 24
+    # Bu kadari icin tahminler olcüm amaciyla veritabanina da yazilir
+    live_persist_limit: int = 6
     outcome_settle_interval_seconds: int = 300
     enable_scheduler: bool = True
 

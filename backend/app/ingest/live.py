@@ -83,11 +83,21 @@ class LiveIngestService:
             db.refresh(m)
         return matches
 
-    def enrich_match(self, db: Session, match: Match) -> None:
-        """Bir macin istatistik ve olaylarini ceker (mac basina 2 istek)."""
+    def enrich_match(self, db: Session, match: Match, *, include_events: bool = True) -> None:
+        """Bir macin istatistik (ve istege bagli olaylarini) ceker."""
         stats = self.provider.get_fixture_statistics(match.provider_fixture_id)
         self.normalizer.apply_statistics(db, match, stats)
         self._update_league_coverage(db, match, stats)
+        if not include_events:
+            db.flush()
+            stats_by_side = {
+                row.side: row
+                for row in db.execute(select(MatchStat).where(MatchStat.match_id == match.id)).scalars()
+            }
+            match.data_quality = self.normalizer.assess_quality(match, stats_by_side)
+            match.last_updated_at = datetime.now(timezone.utc)
+            db.commit()
+            return
         try:
             from app.models import Team  # yerel import (dairesel bagimlilik yok)
 

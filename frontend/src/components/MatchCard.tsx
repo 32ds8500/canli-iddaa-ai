@@ -51,7 +51,7 @@ function FormChips({ form }: { form: string[] }) {
   );
 }
 
-function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
+function PrematchBlock({ preview, live }: { preview?: PrematchPreview; live?: boolean }) {
   if (!preview) {
     return <div className="muted small pad-x">Maç öncesi önizleme yükleniyor…</div>;
   }
@@ -62,7 +62,7 @@ function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
   const last = h2h.matches[0];
   return (
     <div className="prebox">
-      <div className="mgroup__title">Maç öncesi tahmin</div>
+      <div className="mgroup__title">{live ? "Maç öncesi model (canlı veri yok)" : "Maç öncesi tahmin"}</div>
       {p ? (
         <>
           <div className="prebar">
@@ -112,7 +112,12 @@ function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
           {last ? ` · Son: ${last.home} ${last.score} ${last.away}` : ""}
         </div>
       )}
-      {p && <div className="muted small">{p.note}</div>}
+      {p && (
+        <div className="muted small">
+          {p.note}
+          {live ? " Canlı istatistik sağlayıcıdan alınamadığı için skor/dakika modele yansımaz." : ""}
+        </div>
+      )}
     </div>
   );
 }
@@ -120,6 +125,9 @@ function PrematchBlock({ preview }: { preview?: PrematchPreview }) {
 export function MatchCard({ match, preview, previewBusy, onPreview, onOpen }: Props) {
   const q = qualityLabel(match.data_quality);
   const isUpcoming = match.status.short === "NS" || match.status.short === "TBD";
+  const isLive = ["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "IN_PLAY", "PAUSED", "SUSP", "INT"].includes(
+    match.status.short,
+  );
   const pred = match.predictions;
   const g = pred.goal;
   const c = pred.corner;
@@ -200,6 +208,27 @@ export function MatchCard({ match, preview, previewBusy, onPreview, onOpen }: Pr
           {pred.goal_insufficient_reason ?? pred.corner_insufficient_reason ?? "Yetersiz veri"}
         </div>
       )}
+
+      {isLive &&
+        !pred.goal_sufficient &&
+        !pred.corner_sufficient &&
+        (preview ? (
+          <PrematchBlock preview={preview} live />
+        ) : (
+          <div className="prebox">
+            <div className="mgroup__title">Canlı istatistik yok</div>
+            <button
+              className="btn btn--sm"
+              disabled={previewBusy}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview?.(match.id);
+              }}
+            >
+              {previewBusy ? "Yükleniyor…" : "Form, H2H ve maç öncesi modeli göster"}
+            </button>
+          </div>
+        ))}
 
       {pred.goal_sufficient && (
         <div className="mgroup">

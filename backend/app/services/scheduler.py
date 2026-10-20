@@ -15,10 +15,6 @@ from app.providers.base import NotConfiguredError, ProviderError
 
 logger = logging.getLogger("canli-iddaa.scheduler")
 
-# Her dongude istatistik cekilecek maksimum mac sayisi (kota korumasi)
-WATCHLIST_LIMIT = 2
-
-
 def refresh_live_job() -> None:
     provider = get_provider_singleton()
     if not provider.is_configured():
@@ -33,15 +29,21 @@ def refresh_live_job() -> None:
     try:
         matches = ingest.refresh_live(db)
         logger.info("Canli liste yenilendi: %d mac", len(matches))
-        # en guncel birkac mac icin istatistik cek (kota dostu)
-        matches.sort(key=lambda m: (m.elapsed_minute or 0), reverse=True)
-        for match in matches[:WATCHLIST_LIMIT]:
+        # En uzun suredir guncellenmemis maclardan basla: her turda farkli
+        # maclar istatistik alir, boylece tum canli maclar zamanla kapsanir.
+        def _age(m: Match) -> float:
+            return m.last_updated_at.timestamp() if m.last_updated_at else 0.0
+
+        settings = get_settings()
+        matches.sort(key=_age)
+        for idx, match in enumerate(matches[: settings.live_enrich_limit]):
             if quota is not None and not quota.can_call(cost=2):
                 break
             try:
-                ingest.enrich_match(db, match)
+                ingest.enrich_match(db, match, include_events=idx < 4)
                 bundle = run_models(db, match)
-                persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
+                if idx < settings.live_persist_limit:
+                    persist_predictions(db, bundle, provider=match.provider, match_status=match.status_short)
             except ProviderError as exc:
                 logger.warning("Istatistik cekilemedi (%s): %s", match.id, exc)
     except NotConfiguredError:

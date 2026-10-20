@@ -402,7 +402,7 @@ def refresh_match(
 def enrich_watchlist(
     db: Session = Depends(get_db),
     ingest: LiveIngestService = Depends(get_ingest_dep),
-    limit: int = Query(3, ge=1, le=20),
+    limit: int = Query(3, ge=1, le=40),
 ) -> dict:
     """Canli maclardan en onemli N tanesi icin istatistik ceker (kota dostu)."""
     matches = _live_query(db)

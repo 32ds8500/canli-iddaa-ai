@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { enrichWatchlist, fetchLiveMatches, refreshLive } from "../api";
+import { enrichWatchlist, fetchLiveMatches, fetchMatchPreview, refreshLive } from "../api";
 import type { LiveFilters } from "../api";
-import type { LiveMatch } from "../types";
+import type { LiveMatch, PrematchPreview } from "../types";
 import { Filters } from "./Filters";
 import { MatchCard } from "./MatchCard";
 
@@ -12,9 +12,23 @@ interface Props {
 export function LiveBoard({ onOpen }: Props) {
   const [filters, setFilters] = useState<LiveFilters>({});
   const [matches, setMatches] = useState<LiveMatch[]>([]);
+  const [previews, setPreviews] = useState<Record<string, PrematchPreview>>({});
+  const [previewBusy, setPreviewBusy] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const loadPreview = async (id: string) => {
+    setPreviewBusy((b) => ({ ...b, [id]: true }));
+    try {
+      const r = await fetchMatchPreview(id);
+      setPreviews((p) => ({ ...p, [id]: r.preview }));
+    } catch {
+      /* tek mac onizlemesi basarisizsa sessiz gec */
+    } finally {
+      setPreviewBusy((b) => ({ ...b, [id]: false }));
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -71,14 +85,21 @@ export function LiveBoard({ onOpen }: Props) {
         <div className="empty">
           <p>Şu anda izlenen canlı maç yok.</p>
           <p className="muted small">
-            Şu anda hedef liglerde oynanan maç yok. Günün tüm maçlarını <b>Bugün</b> sekmesinden görebilirsin.
+            Şu anda canlı maç yok. Günün tüm maçlarını <b>Bugün</b> sekmesinden görebilirsin.
           </p>
         </div>
       )}
 
       <div className="board__grid">
         {matches.map((m) => (
-          <MatchCard key={m.id} match={m} onOpen={onOpen} />
+          <MatchCard
+            key={m.id}
+            match={m}
+            preview={previews[m.id]}
+            previewBusy={previewBusy[m.id]}
+            onPreview={loadPreview}
+            onOpen={onOpen}
+          />
         ))}
       </div>
     </section>

@@ -13,6 +13,7 @@ Canlı futbol maçları için **gol** ve **korner** olasılıklarını ayrı mod
   - **API-Football / api-sports.io** (anahtar gerekir): aynı alanlar + tehlikeli atak.
   - `PROVIDER_MODE` ile seçilir: `auto` (anahtar varsa API-Football, yoksa FotMob), `fotmob`, `api-football`.
 - **İki ayrı motor:** Gol olasılıkları ve korner olasılıkları birbirinden bağımsız hesaplanır.
+- **Canlı istatistik yoksa:** Sağlayıcı o ligde canlı istatistik vermiyorsa kart "Canlı istatistik yok" der ve tek tıkla son 10 form, H2H ve maç öncesi Poisson modelini gösterir; skor/dakika modele yansımadığı açıkça belirtilir. Sağlayıcıdan istatistik gelen major liglerde canlı gol/korner tahminleri otomatik üretilir.
 - **Maç öncesi önizleme:** Başlamamış maçlarda son 10 maç formu (G/B/M, gol istatistikleri), iki takımın geçmiş karşılaşmaları (H2H) ve Poisson tabanlı maç öncesi tahmin (1X2, 2.5 Üst, KG, çifte şans) gösterilir.
 - **Veri kalitesi:** İstatistik eksik/çelişkili olduğunda o tahmin üretilmez; arayüzde "Yetersiz veri" ve gerekçesi gösterilir.
 - **Kayıt & ölçüm:** Her tahmin zaman damgası, dakika, skor, model adı/sürümü ve veri kalitesiyle saklanır. Maç bittiğinde sonuç eşleştirilir; Brier, LogLoss ve kalibrasyon hesaplanır.

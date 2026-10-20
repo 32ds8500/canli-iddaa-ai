@@ -11,7 +11,7 @@ from app.eval.settlement import settle_match
 from app.ingest.live import LIVE_SHORT_STATUSES, NOT_STARTED, LiveIngestService
 from app.models import League, Match, MatchEvent, Prediction, PredictionOutcome, StatSnapshot, Team
 from app.providers.base import FootballProvider, ProviderError
-from app.services.match_view import key_markets, serialize_match
+from app.services.match_view import serialize_match
 from app.services.payloads import _prediction_payload, build_day, build_live, day_cache_key, live_cache_key
 from app.services.response_cache import cached, invalidate
 from app.services.odds import OddsService, odds_for_match
